@@ -107,7 +107,7 @@ class Repository implements ConfigRepositoryInterface
                 \explode('.', $key)
             );
             $newKey = \implode('', $parts);
-        } elseif ('[' !== $key) {
+        } elseif ('[' !== ($key[0] ?? '')) {
             $newKey = "[{$key}]";
         } else {
             $newKey = $key;
