@@ -47,7 +47,7 @@ class JsonFormatter extends BaseJsonFormatter
             ? $data['datetime']
             : new \DateTime();
 
-        $normalizedData = parent::normalize($data, $depth);
+        $normalizedData = $this->normalize($data, $depth);
         $level = \strtolower($data['level_name'] ?? 'info');
         unset(
             $normalizedData['datetime'],

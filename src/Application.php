@@ -14,27 +14,29 @@ use DI\Container;
 use Dotenv\Repository\Adapter\EnvConstAdapter;
 use Dotenv\Repository\Adapter\PutenvAdapter;
 use Dotenv\Repository\RepositoryBuilder;
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\Config\ConfigRepositoryInterface;
+use MakiseCo\Config\Repository;
 use MakiseCo\Env\Env;
 use MakiseCo\Providers\ServiceProviderInterface;
 use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArgvInput;
+use Symfony\Component\Finder\Finder;
 
 class Application implements ApplicationInterface
 {
     protected bool $isBooted = false;
 
-    protected string $directory;
-    protected string $configClass;
+    protected string $appDir;
+    protected string $configDir;
 
     protected Container $container;
-    protected AppConfigInterface $config;
 
-    public function __construct(string $directory, string $configClass)
+    public function __construct(string $appDir, string $configDir)
     {
-        $this->directory = $directory;
-        $this->configClass = $configClass;
+        $this->appDir = $appDir;
+        $this->configDir = $configDir;
+
         $this->container = (new \DI\ContainerBuilder())->build();
 
         $this->boot();
@@ -52,9 +54,14 @@ class Application implements ApplicationInterface
         // TODO: Implement terminate() method.
     }
 
-    public function getConfig(): AppConfigInterface
+    public function getAppDir(): string
     {
-        return $this->config;
+        return $this->appDir;
+    }
+
+    public function getConfigDir(): string
+    {
+        return $this->configDir;
     }
 
     public function getContainer(): Container
@@ -80,6 +87,8 @@ class Application implements ApplicationInterface
     protected function bootDi(): void
     {
         $this->container->set(ApplicationInterface::class, $this);
+        // alias to ApplicationInterface
+        $this->container->set(self::class, \DI\get(ApplicationInterface::class));
     }
 
     protected function bootEnv(): void
@@ -93,7 +102,7 @@ class Application implements ApplicationInterface
 
         $dotenv = \Dotenv\Dotenv::create(
             $repository,
-            [$this->directory . DIRECTORY_SEPARATOR],
+            [$this->appDir . DIRECTORY_SEPARATOR],
             ['.env'],
             true
         );
@@ -104,7 +113,7 @@ class Application implements ApplicationInterface
         if (\array_key_exists('APP_ENV', $_ENV)) {
             \Dotenv\Dotenv::create(
                 $repository,
-                [$this->directory . DIRECTORY_SEPARATOR],
+                [$this->appDir . DIRECTORY_SEPARATOR],
                 [".env.{$_ENV['APP_ENV']}"],
                 true
             )->safeLoad();
@@ -113,23 +122,37 @@ class Application implements ApplicationInterface
 
     protected function bootConfig(): void
     {
-        $appConfig = $this->container->make($this->configClass, [
-            'directory' => $this->directory,
-            'name' => Env::env('APP_NAME'),
-            'env' => Env::env('APP_ENV'),
-            'debug' => Env::env('APP_DEBUG'),
-            'url' => Env::env('APP_URL'),
-            'timezone' => Env::env('APP_TIMEZONE'),
-            'locale' => Env::env('APP_LOCALE'),
-        ]);
+        $finder = new Finder();
+        $repository = new Repository();
 
-        $this->container->set(\MakiseCo\Config\AppConfigInterface::class, $appConfig);
-        $this->config = $appConfig;
+        $this->container->set(ConfigRepositoryInterface::class, $repository);
+
+        $configFiles = $finder
+            ->files()
+            ->in($this->configDir)
+            ->filter(static function (\SplFileInfo $info) {
+                return 'php' === $info->getExtension();
+            })
+            ->getIterator();
+
+        foreach ($configFiles as $configFile) {
+            /** @noinspection PhpIncludeInspection */
+            $config = include $configFile->getPathname();
+            if (!is_array($config)) {
+                throw new \InvalidArgumentException("Config file {$configFile->getFilename()} must return array");
+            }
+
+            $name = $configFile->getBasename('.php');
+
+            $repository->set($name, $config);
+        }
     }
 
     protected function bootProviders(): void
     {
-        $providers = $this->config->getProviders();
+        $providers = $this->container
+            ->get(ConfigRepositoryInterface::class)
+            ->get('app.providers');
 
         foreach ($providers as $provider) {
             $instance = $this->container->make($provider);
@@ -146,7 +169,9 @@ class Application implements ApplicationInterface
     {
         $console = $this->container->get(ConsoleApplication::class);
 
-        $commands = $this->config->getCommands();
+        $commands = $this->container
+            ->get(ConfigRepositoryInterface::class)
+            ->get('app.commands');
 
         foreach ($commands as $command) {
             $instance = $this->container->make($command);

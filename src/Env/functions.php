@@ -8,11 +8,9 @@
 
 declare(strict_types=1);
 
-namespace MakiseCo\Http\Events;
+namespace MakiseCo\Env;
 
-class ServerStarted
+function env(string $key, $default = null)
 {
-    public function __construct()
-    {
-    }
+    return Env::get($key, $default);
 }

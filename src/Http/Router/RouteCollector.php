@@ -35,6 +35,9 @@ class RouteCollector
 
     protected string $currentGroupPrefix;
 
+    /**
+     * @var array<string,mixed>
+     */
     protected array $currentGroupParameters = [];
 
     /**
@@ -78,7 +81,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function addRoute($httpMethod, $route, $handler)
+    public function addRoute($httpMethod, $route, $handler): void
     {
         $route = $this->currentGroupPrefix . $route;
         $routeDatas = $this->routeParser->parse($route);
@@ -120,10 +123,10 @@ class RouteCollector
      * All routes created in the passed callback will have the given group prefix prepended.
      *
      * @param string $prefix
-     * @param array $parameters
+     * @param array<string,mixed> $parameters
      * @param callable $callback
      */
-    public function addGroup(string $prefix, array $parameters, callable $callback)
+    public function addGroup(string $prefix, array $parameters, callable $callback): void
     {
         if (array_key_exists('middleware', $parameters)) {
             $parameters['middleware'] = (array)$parameters['middleware'];
@@ -143,6 +146,9 @@ class RouteCollector
         $this->currentGroupParameters = $previousGroupParameters;
     }
 
+    /**
+     * @param array<string> $middlewareList
+     */
     protected function handleMiddlewareParameter(array $middlewareList): void
     {
         foreach ($middlewareList as $middleware) {
@@ -161,7 +167,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function get($route, $handler)
+    public function get($route, $handler): void
     {
         $this->addRoute('GET', $route, $handler);
     }
@@ -174,7 +180,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function post($route, $handler)
+    public function post($route, $handler): void
     {
         $this->addRoute('POST', $route, $handler);
     }
@@ -187,7 +193,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function put($route, $handler)
+    public function put($route, $handler): void
     {
         $this->addRoute('PUT', $route, $handler);
     }
@@ -200,7 +206,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function delete($route, $handler)
+    public function delete($route, $handler): void
     {
         $this->addRoute('DELETE', $route, $handler);
     }
@@ -213,7 +219,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function patch($route, $handler)
+    public function patch($route, $handler): void
     {
         $this->addRoute('PATCH', $route, $handler);
     }
@@ -226,7 +232,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function head($route, $handler)
+    public function head($route, $handler): void
     {
         $this->addRoute('HEAD', $route, $handler);
     }
@@ -234,9 +240,9 @@ class RouteCollector
     /**
      * Returns the collected route data, as provided by the data generator.
      *
-     * @return array
+     * @return array<array<mixed>>
      */
-    public function getData()
+    public function getData(): array
     {
         return $this->dataGenerator->getData();
     }

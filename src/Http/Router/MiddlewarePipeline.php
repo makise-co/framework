@@ -15,6 +15,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+/**
+ * MiddlewarePipeline is a proxy object between real PSR request handler/middleware calls
+ * It is used to "glue" different pipeline parts together
+ */
 class MiddlewarePipeline implements RequestHandlerInterface
 {
     /**
@@ -22,8 +26,17 @@ class MiddlewarePipeline implements RequestHandlerInterface
      */
     protected $handler;
 
+    /**
+     * @var RequestHandlerInterface|MiddlewarePipeline
+     */
     protected RequestHandlerInterface $next;
 
+    /**
+     * MiddlewarePipeline constructor.
+     *
+     * @param RequestHandlerInterface|MiddlewareInterface $handler points to the current pipeline call
+     * @param RequestHandlerInterface|MiddlewarePipeline $next points to the next pipeline call
+     */
     public function __construct($handler, RequestHandlerInterface $next)
     {
         if (!$handler instanceof RequestHandlerInterface && !$handler instanceof MiddlewareInterface) {
@@ -37,10 +50,12 @@ class MiddlewarePipeline implements RequestHandlerInterface
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
+        // call request handler
         if ($this->handler instanceof RequestHandlerInterface) {
             return $this->handler->handle($request);
         }
 
+        // call middleware
         return $this->handler->process($request, $this->next);
     }
 }

@@ -1,9 +1,9 @@
 <?php
 /**
- * File: ServerShutdown.php
- * Author: Dmitry K. <dmitry.k@brainex.co>
- * Date: 2020-03-09
- * Copyright (c) 2020
+ * This file is part of the Makise-Co Framework
+ *
+ * World line: 0.571024a
+ * (c) Dmitry K. <coder1994@gmail.com>
  */
 
 declare(strict_types=1);

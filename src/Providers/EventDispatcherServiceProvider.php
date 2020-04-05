@@ -18,8 +18,18 @@ class EventDispatcherServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $container): void
     {
-        $container->set(EventDispatcherInterface::class, static function () {
-            return new EventDispatcher();
-        });
+        // event dispatcher should be created immediately
+        $dispatcher = new EventDispatcher();
+
+        $container->set(EventDispatcherInterface::class, $dispatcher);
+
+        // alias EventDispatcher to EventDispatcherInterface
+        $container->set(EventDispatcher::class, \DI\get(EventDispatcherInterface::class));
+
+        $this->registerEvents($container, $dispatcher);
+    }
+
+    protected function registerEvents(Container $container, EventDispatcher $dispatcher): void
+    {
     }
 }

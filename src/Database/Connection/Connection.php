@@ -8,11 +8,8 @@
 
 declare(strict_types=1);
 
-namespace MakiseCo\Http\Events;
+namespace MakiseCo\Database\Connection;
 
-class ServerStarted
+abstract class Connection implements ConnectionInterface
 {
-    public function __construct()
-    {
-    }
 }

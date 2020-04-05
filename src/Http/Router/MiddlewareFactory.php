@@ -14,7 +14,6 @@ use DI\Container;
 use Psr\Http\Server\MiddlewareInterface;
 
 use function class_exists;
-use function is_string;
 
 class MiddlewareFactory
 {
@@ -25,23 +24,22 @@ class MiddlewareFactory
         $this->container = $container;
     }
 
-    public function create($middleware): MiddlewareInterface
+    public function create(string $middleware): MiddlewareInterface
     {
-        if (is_string($middleware)) {
-            if (!class_exists($middleware)) {
-                throw new Exception\WrongMiddlewareException(
-                    "Middleware class {$middleware} not found",
-                    $middleware
-                );
-            }
-
-            $middlewareObj = $this->container->make($middleware);
-        } else {
-            $middlewareObj = $middleware;
+        if (!class_exists($middleware)) {
+            throw new Exception\WrongMiddlewareException(
+                "Middleware class {$middleware} not found",
+                $middleware
+            );
         }
 
+        $middlewareObj = $this->container->make($middleware);
+
         if (!$middlewareObj instanceof MiddlewareInterface) {
-            throw new Exception\WrongMiddlewareException('Middleware must implement MiddlewareInterface', $middleware);
+            throw new Exception\WrongMiddlewareException(
+                "Middleware {$middleware} must implement MiddlewareInterface",
+                $middleware
+            );
         }
 
         return $middlewareObj;
