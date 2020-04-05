@@ -8,11 +8,9 @@
 
 declare(strict_types=1);
 
-namespace MakiseCo\Http\Events;
+namespace MakiseCo\Contracts;
 
-class ServerStarted
+interface ArrayableInterface
 {
-    public function __construct()
-    {
-    }
+    public function toArray(): array;
 }

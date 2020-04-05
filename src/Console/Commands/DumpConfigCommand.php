@@ -10,16 +10,17 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\Config\ConfigRepositoryInterface;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DumpConfigCommand extends Command
 {
-    protected AppConfigInterface $config;
+    protected ConfigRepositoryInterface $config;
 
-    public function __construct(AppConfigInterface $config)
+    public function __construct(ConfigRepositoryInterface $config)
     {
         $this->config = $config;
 
@@ -29,15 +30,25 @@ class DumpConfigCommand extends Command
     protected function configure(): void
     {
         $this->setName('config:dump');
+        $this->addArgument(
+            'path',
+            InputArgument::OPTIONAL,
+            'Specific config path',
+            null
+        );
 
         $this->setDescription('Show app configuration');
     }
 
-    public function execute(InputInterface $input, OutputInterface $output)
+    public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $dump = \print_r($this->config, true);
+        $path = $input->getArgument('path');
 
-        $output->writeln("<info>{$dump}</info>");
+        if (null === $path) {
+            dump($this->config->toArray());
+        } else {
+            dump($this->config->get($path));
+        }
 
         return 0;
     }

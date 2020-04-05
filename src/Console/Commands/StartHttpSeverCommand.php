@@ -10,24 +10,37 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
+use MakiseCo\Config\ConfigRepositoryInterface;
+use MakiseCo\Http\Events\ServerStarted;
 use MakiseCo\Http\HttpServer;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
-class StartHttpSever extends Command
+class StartHttpSeverCommand extends Command
 {
+    private EventDispatcher $dispatcher;
     private HttpServer $httpServer;
     private LoggerInterface $logger;
+    private ConfigRepositoryInterface $config;
 
-    public function __construct(HttpServer $httpServer, LoggerInterface $logger)
-    {
-        $this->httpServer = $httpServer;
-        $this->logger = $logger;
+    public function __construct(
+        EventDispatcher $dispatcher,
+        HttpServer $httpServer,
+        LoggerInterface $logger,
+        ConfigRepositoryInterface $config
+    ) {
+        $this->dispatcher = $dispatcher;
+        // set config before parent construct, because it will call pa
+        $this->config = $config;
 
         parent::__construct(null);
+
+        $this->httpServer = $httpServer;
+        $this->logger = $logger;
     }
 
     protected function configure(): void
@@ -40,7 +53,7 @@ class StartHttpSever extends Command
             null,
             InputArgument::OPTIONAL,
             'Server host',
-            '127.0.0.1'
+            $this->config->get('http.host', '127.0.0.1')
         );
 
         $this->addOption(
@@ -48,19 +61,21 @@ class StartHttpSever extends Command
             'p',
             InputArgument::OPTIONAL,
             'Server port',
-            '8000'
+            $this->config->get('http.port', 10228)
         );
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        $this->logger->info('App is started');
-
         $port = $input->getOption('port');
         if (null !== $port) {
             $port = (int)$port;
         }
         $host = $input->getOption('host');
+
+        $this->dispatcher->addListener(ServerStarted::class, function () use ($host, $port) {
+            $this->logger->info('App is started', ['host' => $host, 'port' => $port]);
+        });
 
         $this->httpServer->start($host, $port);
 

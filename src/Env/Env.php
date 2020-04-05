@@ -28,10 +28,10 @@ class Env
 
     /**
      * @param string $key
-     * @param null $default
+     * @param mixed $default
      * @return mixed
      */
-    public static function env(string $key, $default = null)
+    public static function get(string $key, $default = null)
     {
         /** @noinspection PhpParamsInspection */
         return Option::fromValue(static::$repository->get($key))

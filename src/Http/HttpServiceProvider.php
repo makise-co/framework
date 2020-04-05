@@ -11,7 +11,9 @@ declare(strict_types=1);
 namespace MakiseCo\Http;
 
 use DI\Container;
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\Config\ConfigRepositoryInterface;
+use MakiseCo\Database\DatabaseManager;
+use MakiseCo\Http\Events\WorkerStarted;
 use MakiseCo\Http\Exceptions\ExceptionHandler;
 use MakiseCo\Http\Exceptions\ExceptionHandlerInterface;
 use MakiseCo\Http\Handler\ControllerInvoker;
@@ -25,11 +27,41 @@ use MakiseCo\Http\Router\MiddlewarePipelineFactory;
 use MakiseCo\Http\Router\RouteCollector;
 use MakiseCo\Http\Router\RouteHandlerFactory;
 use MakiseCo\Providers\ServiceProviderInterface;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class HttpServiceProvider implements ServiceProviderInterface
 {
+    private EventDispatcher $dispatcher;
+
+    public function __construct(EventDispatcher $dispatcher)
+    {
+        $this->dispatcher = $dispatcher;
+    }
+
     public function register(Container $container): void
     {
+        // initialize database if possible
+        if ($container->has(DatabaseManager::class)) {
+            $this->dispatcher->addListener(
+                WorkerStarted::class,
+                function () use ($container) {
+                    $container->get(DatabaseManager::class)->initPools();
+                }
+            );
+        }
+
+        $container->set(
+            HttpServer::class,
+            function (Container $container, ConfigRepositoryInterface $config) {
+                return new HttpServer(
+                    $container->make(HttpKernel::class),
+                    $container->make(EventDispatcher::class),
+                    $config->get('http.swoole', []),
+                    $config->get('app.name')
+                );
+            }
+        );
+
         $container->set(
             ExceptionHandlerInterface::class,
             fn() => $container->make(ExceptionHandler::class)
@@ -45,7 +77,7 @@ class HttpServiceProvider implements ServiceProviderInterface
             fn(Container $container) => new RouteInvokeHandler($container->get(ControllerInvoker::class))
         );
 
-        $container->set(RouteCollector::class, function (Container $container, AppConfigInterface $config) {
+        $container->set(RouteCollector::class, function (Container $container, ConfigRepositoryInterface $config) {
             $middlewareContainer = $container->get(MiddlewareContainer::class);
 
             $routes = new RouteCollector(
@@ -72,12 +104,12 @@ class HttpServiceProvider implements ServiceProviderInterface
 
         $container->set(
             RequestHandler::class,
-            function (Container $container, AppConfigInterface $config) {
+            function (Container $container, ConfigRepositoryInterface $config) {
                 return new RequestHandler(
                     $container->make(ExceptionHandlerMiddleware::class),
                     $container->get(RouteDispatchHandler::class),
                     $container->make(MiddlewarePipelineFactory::class),
-                    $config->getGlobalMiddlewares()
+                    $config->get('http.middleware', [])
                 );
             }
         );
@@ -94,11 +126,11 @@ class HttpServiceProvider implements ServiceProviderInterface
 
         $container->set(
             MiddlewareContainer::class,
-            function (AppConfigInterface $config, MiddlewareFactory $factory) {
+            function (ConfigRepositoryInterface $config, MiddlewareFactory $factory) {
                 $container = new MiddlewareContainer();
 
                 // boot global middlewares
-                foreach ($config->getGlobalMiddlewares() as $middleware) {
+                foreach ($config->get('http.middleware', []) as $middleware) {
                     $container->add($factory->create($middleware));
                 }
 
@@ -107,10 +139,10 @@ class HttpServiceProvider implements ServiceProviderInterface
         );
     }
 
-    protected function loadRoutes(Container $container, AppConfigInterface $config, RouteCollector $routes): void
+    protected function loadRoutes(Container $container, ConfigRepositoryInterface $config, RouteCollector $routes): void
     {
-        foreach ($config->getHttpRoutes() as $file) {
-            include_once $file;
+        foreach ($config->get('http.routes', []) as $file) {
+            include $file;
         }
     }
 }

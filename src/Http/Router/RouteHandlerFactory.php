@@ -25,23 +25,22 @@ class RouteHandlerFactory
 {
     protected Container $container;
     protected array $controllers = [];
-    protected Closure $resolver;
 
     /**
      * @var Closure[]
      */
     protected array $handlers = [];
 
-    public function __construct(Container $container, ?Closure $resolver = null)
+    public function __construct(Container $container)
     {
         $this->container = $container;
-        if (null === $resolver) {
-            $resolver = Closure::fromCallable(function (Route $route, array $args) use ($container) {
-//                $container->call()
-            });
-        }
     }
 
+    /**
+     * @param string|array|callable|Closure $handler
+     * @param string $namespace
+     * @return Closure
+     */
     public function create($handler, string $namespace = ''): Closure
     {
         if ($handler instanceof Closure) {

@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http\Events;
 
-class WorkerStarted
+class WorkerExit
 {
     protected int $workerId;
 

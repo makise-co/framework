@@ -10,10 +10,10 @@ declare(strict_types=1);
 
 require_once __DIR__ . DIRECTORY_SEPARATOR . 'vendor/autoload.php';
 
-$app = new \MakiseCo\Application(
-    realpath(__DIR__),
-    \MakiseCo\Config\AppAppConfig::class
-);
+$appDir = realpath(__DIR__);
+$configDir = $appDir . DIRECTORY_SEPARATOR . 'config' . DIRECTORY_SEPARATOR;
+
+$app = new \MakiseCo\Application($appDir, $configDir);
 
 $code = $app->run($argv);
 exit($code);

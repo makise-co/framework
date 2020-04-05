@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\ApplicationInterface;
 use MakiseCo\Http\Router\Route;
 use MakiseCo\Http\Router\RouteCollector;
 use Symfony\Component\Console\Command\Command;
@@ -20,12 +20,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 
 class RoutesDumpCommand extends Command
 {
-    protected AppConfigInterface $config;
+    protected ApplicationInterface $app;
     protected RouteCollector $routes;
 
-    public function __construct(AppConfigInterface $config, RouteCollector $routes)
+    public function __construct(ApplicationInterface $config, RouteCollector $routes)
     {
-        $this->config = $config;
+        $this->app = $config;
         $this->routes = $routes;
 
         parent::__construct(null);
@@ -99,7 +99,7 @@ class RoutesDumpCommand extends Command
             $handler = $reflection->getName();
         } elseif ($name === '{closure}') {
             $name = \str_replace(
-                $this->config->getDirectory(),
+                $this->app->getAppDir(),
                 '',
                 $reflection->getFileName()
             );

@@ -11,7 +11,7 @@ declare(strict_types=1);
 namespace MakiseCo\Log;
 
 use DI\Container;
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Providers\ServiceProviderInterface;
 use Monolog\Formatter\FormatterInterface;
 use Monolog\Handler\FormattableHandlerInterface;
@@ -23,15 +23,18 @@ class LoggerServiceProvider implements ServiceProviderInterface
 {
     public function register(Container $container): void
     {
-        $container->set(LoggerInterface::class, function (AppConfigInterface $appConfig) use ($container) {
-            $logger = new Logger($appConfig->getName());
+        $container->set(LoggerInterface::class, function (Container $container, ConfigRepositoryInterface $config) {
+            $logger = new Logger($config->get('app.name'));
 
-            foreach ($appConfig->getLoggerConfig() as $handlerConfig) {
+            foreach ($config->get('logging', []) as $handlerConfig) {
                 $this->setupMonologHandler($container, $logger, $handlerConfig);
             }
 
             return $logger;
         });
+
+        // alias monolog to LoggerInterface
+        $container->set(Logger::class, \DI\get(LoggerInterface::class));
     }
 
     protected function setupMonologHandler(Container $container, Logger $logger, array $handlerConfig): void

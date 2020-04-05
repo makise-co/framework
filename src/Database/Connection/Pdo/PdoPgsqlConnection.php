@@ -8,11 +8,9 @@
 
 declare(strict_types=1);
 
-namespace MakiseCo\Http\Events;
+namespace MakiseCo\Database\Connection\Pdo;
 
-class ServerStarted
+class PdoPgsqlConnection extends PdoConnection
 {
-    public function __construct()
-    {
-    }
+
 }

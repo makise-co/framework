@@ -19,7 +19,6 @@
 * PSR-совместим, но расширяет функциональность для обеспечения работы
 долгоживущего приложения (Long-Live/Long-Running)
 * Фреймворк реализует API, схожее с Laravel
-* Строго типизированная конфигурация
 * Фреймворк использует общепринятые библетеки, такие как:
     * symfony/console
     * symfony/http-foundation
@@ -46,20 +45,8 @@
     7. Конечный обработчик запроса (контроллер)
 
 ## Конфигурация
-В `bootstrap.php` (сейчас это `app.php`) переопределить класс конфигурации приложения:
-```php
-<?php
-$app = new \MakiseCo\Application(
-    realpath(__DIR__),
-    // \MakiseCo\Config\AppAppConfig::class
-    \App\Config\MyOwnConfig::class
-);
-
-$code = $app->run($argv);
-exit($code);
-```
-
-Указанный класс должен реализовать `MakiseCo\Config\AppConfigInterface`
+Конфиг файлы расположены в директории `config`.
+Путь к папке можно переопределить в bootstrap.php (сейчас это app.php)
 
 ## Сервис провайдеры (инъекция через DI)
 Необходимо реализовать метод в конфиге метод интерфейса `MakiseCo\Config\AppConfigInterface::getProviders`

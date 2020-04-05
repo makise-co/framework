@@ -12,6 +12,7 @@ namespace MakiseCo\Http\Handler;
 
 use Invoker\Invoker;
 use Invoker\ParameterResolver\AssociativeArrayResolver;
+use Invoker\ParameterResolver\Container\TypeHintContainerResolver;
 use Invoker\ParameterResolver\DefaultValueResolver;
 use Invoker\ParameterResolver\NumericArrayResolver;
 use Invoker\ParameterResolver\ResolverChain;
@@ -29,6 +30,7 @@ class ControllerInvoker extends Invoker
             new TypeHintResolver(),
             new AssociativeArrayResolver(),
             new NumericArrayResolver(),
+            new TypeHintContainerResolver($container),
             new DefaultValueResolver(),
         ]);
 

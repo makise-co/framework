@@ -11,15 +11,18 @@ declare(strict_types=1);
 namespace MakiseCo;
 
 use DI\Container;
-use MakiseCo\Config\AppConfigInterface;
 
 interface ApplicationInterface
 {
+    /**
+     * @param array<string> $argv
+     * @return int
+     */
     public function run(array $argv): int;
 
     public function terminate(): void;
 
-    public function getConfig(): AppConfigInterface;
-
     public function getContainer(): Container;
+
+    public function getAppDir(): string;
 }

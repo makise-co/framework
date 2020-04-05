@@ -10,7 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http\Exceptions;
 
-use MakiseCo\Config\AppConfigInterface;
+use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Http\JsonResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -24,14 +24,14 @@ use const JSON_UNESCAPED_SLASHES;
 
 class ExceptionHandler implements ExceptionHandlerInterface
 {
-    protected AppConfigInterface $config;
+    protected ConfigRepositoryInterface $config;
     protected LoggerInterface $logger;
 
     protected array $doNotLog = [
         HttpExceptionInterface::class,
     ];
 
-    public function __construct(AppConfigInterface $config, LoggerInterface $logger)
+    public function __construct(ConfigRepositoryInterface $config, LoggerInterface $logger)
     {
         $this->config = $config;
         $this->logger = $logger;
@@ -103,7 +103,7 @@ class ExceptionHandler implements ExceptionHandlerInterface
      */
     protected function convertExceptionToArray(Throwable $e): array
     {
-        if (!$this->config->isDebug()) {
+        if (!$this->config->get('app.debug')) {
             return [
                 'message' => 'Server Error'
             ];
