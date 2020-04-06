@@ -10,13 +10,11 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http\Swoole;
 
-use MakiseCo\Http\Response as MakiseResponse;
-use Psr\Http\Message\StreamInterface;
+use Psr\Http\Message\ResponseInterface;
 use Swoole\Http\Response as SwooleResponse;
 
-use function implode;
-use function str_split;
-use function time;
+use function array_key_exists;
+use function gmdate;
 
 final class SwooleEmitter
 {
@@ -29,13 +27,12 @@ final class SwooleEmitter
      * Emits a response for the Swoole environment.
      *
      * @param SwooleResponse $swooleResponse
-     * @param MakiseResponse $makiseResponse
+     * @param ResponseInterface $makiseResponse
      */
-    public function emit(SwooleResponse $swooleResponse, MakiseResponse $makiseResponse): void
+    public function emit(SwooleResponse $swooleResponse, ResponseInterface $makiseResponse): void
     {
         $this->emitStatusCode($swooleResponse, $makiseResponse);
         $this->emitHeaders($swooleResponse, $makiseResponse);
-        $this->emitCookies($swooleResponse, $makiseResponse);
         $this->emitBody($swooleResponse, $makiseResponse);
     }
 
@@ -43,9 +40,9 @@ final class SwooleEmitter
      * Emit the status code
      *
      * @param SwooleResponse $swooleResponse
-     * @param MakiseResponse $makiseResponse
+     * @param ResponseInterface $makiseResponse
      */
-    private function emitStatusCode(SwooleResponse $swooleResponse, MakiseResponse $makiseResponse): void
+    private function emitStatusCode(SwooleResponse $swooleResponse, ResponseInterface $makiseResponse): void
     {
         $swooleResponse->status($makiseResponse->getStatusCode());
     }
@@ -54,17 +51,22 @@ final class SwooleEmitter
      * Emit the headers
      *
      * @param SwooleResponse $swooleResponse
-     * @param MakiseResponse $makiseResponse
+     * @param ResponseInterface $makiseResponse
      */
-    private function emitHeaders(SwooleResponse $swooleResponse, MakiseResponse $makiseResponse): void
+    private function emitHeaders(SwooleResponse $swooleResponse, ResponseInterface $makiseResponse): void
     {
+        $headers = $makiseResponse->getHeaders();
+
         /* RFC2616 - 14.18 says all Responses need to have a Date */
-        if (!$makiseResponse->hasHeader('Date')) {
-            $makiseResponse->setDate(\DateTime::createFromFormat('U', time()));
+        if (!array_key_exists('Date', $headers)) {
+            $date = gmdate('D, d M Y H:i:s GMT');
+            $headers['Date'] = [$date];
         }
 
-        foreach ($makiseResponse->headers->allPreserveCaseWithoutCookies() as $name => $values) {
-            $swooleResponse->header($name, implode(', ', $values));
+        foreach ($headers as $name => $values) {
+            foreach ($values as $value) {
+                $swooleResponse->header($name, $value);
+            }
         }
     }
 
@@ -72,32 +74,12 @@ final class SwooleEmitter
      * Emit the message body.
      *
      * @param SwooleResponse $swooleResponse
-     * @param MakiseResponse $makiseResponse
+     * @param ResponseInterface $makiseResponse
      */
-    private function emitBody(SwooleResponse $swooleResponse, MakiseResponse $makiseResponse): void
+    private function emitBody(SwooleResponse $swooleResponse, ResponseInterface $makiseResponse): void
     {
         $body = $makiseResponse->getBody();
 
-        if ($body instanceof StreamInterface) {
-            $this->emitStreamedBody($swooleResponse, $body);
-
-            return;
-        }
-
-        $this->emitRawBody($swooleResponse, $body);
-    }
-
-    private function emitRawBody(SwooleResponse $swooleResponse, string $body): void
-    {
-        foreach (str_split($body, self::CHUNK_SIZE) as $chunk) {
-            $swooleResponse->write($chunk);
-        }
-
-        $swooleResponse->end();
-    }
-
-    private function emitStreamedBody(SwooleResponse $swooleResponse, StreamInterface $body): void
-    {
         $body->rewind();
 
         if ($body->getSize() <= static::CHUNK_SIZE) {
@@ -112,40 +94,5 @@ final class SwooleEmitter
         }
 
         $swooleResponse->end();
-    }
-
-    /**
-     * Emit the cookies
-     *
-     * @param SwooleResponse $swooleResponse
-     * @param MakiseResponse $makiseResponse
-     */
-    private function emitCookies(SwooleResponse $swooleResponse, MakiseResponse $makiseResponse): void
-    {
-        foreach ($makiseResponse->headers->getCookies() as $cookie) {
-            if ($cookie->isRaw()) {
-                $swooleResponse->rawcookie(
-                    $cookie->getName(),
-                    $cookie->getValue(),
-                    $cookie->getExpiresTime(),
-                    $cookie->getPath(),
-                    $cookie->getDomain(),
-                    $cookie->isSecure(),
-                    $cookie->isHttpOnly(),
-                    $cookie->getSameSite()
-                );
-            } else {
-                $swooleResponse->cookie(
-                    $cookie->getName(),
-                    $cookie->getValue(),
-                    $cookie->getExpiresTime(),
-                    $cookie->getPath(),
-                    $cookie->getDomain(),
-                    $cookie->isSecure(),
-                    $cookie->isHttpOnly(),
-                    $cookie->getSameSite()
-                );
-            }
-        }
     }
 }

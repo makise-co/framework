@@ -16,13 +16,38 @@ use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class Response extends SymfonyResponse implements ResponseInterface
 {
-    public function withProtocolVersion($version): self
+    /**
+     * @var StreamInterface
+     */
+    protected $content;
+
+    public function setContent(?string $content): self
     {
-        $this->setProtocolVersion($version);
+        $this->content = new FakeStream($content ?: '');
 
         return $this;
     }
 
+    public function getContent(): string
+    {
+        if (null === $this->content) {
+            return '';
+        }
+
+        return $this->content->__toString();
+    }
+
+    public function withProtocolVersion($version): self
+    {
+        $response = clone $this;
+        $response->setProtocolVersion($version);
+
+        return $response;
+    }
+
+    /**
+     * @inheritDoc
+     */
     public function getHeaders(): array
     {
         return $this->headers->allPreserveCase();
@@ -52,43 +77,48 @@ class Response extends SymfonyResponse implements ResponseInterface
 
     public function withHeader($name, $value): self
     {
-        $this->headers->replace([$name => $value]);
+        $response = clone $this;
+        $response->headers->set($name, $value, true);
 
-        return $this;
+        return $response;
     }
 
     public function withAddedHeader($name, $value): self
     {
-        $this->headers->add([$name => $value]);
+        $response = clone $this;
+        $response->headers->set($name, $value, false);
 
-        return $this;
+        return $response;
     }
 
     public function withoutHeader($name): self
     {
-        $this->headers->remove($name);
+        $response = clone $this;
+        $response->headers->remove($name);
 
-        return $this;
+        return $response;
     }
 
-    public function getBody()
+    public function getBody(): StreamInterface
     {
         return $this->content;
     }
 
     public function withBody(StreamInterface $body): self
     {
-        $this->content = $body->getContents();
+        $response = clone $this;
+        $response->content = $body;
 
-        return $this;
+        return $response;
     }
 
     public function withStatus($code, $reasonPhrase = ''): self
     {
-        $this->statusCode = (int)$code;
-        $this->statusText = $reasonPhrase;
+        $response = clone $this;
+        $response->statusCode = (int)$code;
+        $response->statusText = $reasonPhrase;
 
-        return $this;
+        return $response;
     }
 
     public function getReasonPhrase(): string

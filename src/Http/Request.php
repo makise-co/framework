@@ -18,6 +18,11 @@ use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 class Request extends SymfonyRequest implements ServerRequestInterface
 {
+    /**
+     * @var StreamInterface
+     */
+    protected $content;
+
     protected ?RequestContextInterface $context = null;
     protected Route $route;
 
@@ -43,6 +48,11 @@ class Request extends SymfonyRequest implements ServerRequestInterface
     public function getRoute(): Route
     {
         return $this->route;
+    }
+
+    public function getContent(bool $asResource = false): StreamInterface
+    {
+        return $this->content;
     }
 
     public function withProtocolVersion($version): self
@@ -104,7 +114,7 @@ class Request extends SymfonyRequest implements ServerRequestInterface
         return $self;
     }
 
-    public function getBody()
+    public function getBody(): StreamInterface
     {
         return $this->content;
     }

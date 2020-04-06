@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http\Swoole;
 
+use MakiseCo\Http\FakeStream;
 use MakiseCo\Http\Request;
 use Swoole\Http\Request as SwooleRequest;
 use Symfony\Component\HttpFoundation\ParameterBag;
@@ -63,7 +64,7 @@ class RequestFactory
             $cookie,
             $files,
             $this->transformServer($server, $headers),
-            $content,
+            new FakeStream($content),
         );
 
         if (0 === strpos($makiseRequest->headers->get('CONTENT_TYPE', ''), 'application/x-www-form-urlencoded')
