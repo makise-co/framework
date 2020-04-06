@@ -18,7 +18,7 @@ use const JSON_UNESCAPED_UNICODE;
 
 class JsonResponse extends Response
 {
-    protected const JSON_OPTIONS = JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE;
+    public const JSON_OPTIONS = JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE;
 
     public function __construct($body, int $status = 200, array $headers = [], int $options = self::JSON_OPTIONS)
     {

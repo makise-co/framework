@@ -25,4 +25,6 @@ interface ApplicationInterface
     public function getContainer(): Container;
 
     public function getAppDir(): string;
+
+    public function getVersion(): string;
 }
