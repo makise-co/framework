@@ -146,6 +146,9 @@ class Application implements ApplicationInterface
 
             $repository->set($name, $config);
         }
+
+        date_default_timezone_set($repository->get('app.timezone', 'UTC'));
+        mb_internal_encoding('UTF-8');
     }
 
     protected function bootProviders(): void
