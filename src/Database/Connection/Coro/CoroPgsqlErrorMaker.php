@@ -13,7 +13,6 @@ namespace MakiseCo\Database\Connection\Coro;
 use Swoole\Coroutine\PostgreSQL;
 use PDOException;
 
-use function property_exists;
 use function sprintf;
 
 class CoroPgsqlErrorMaker
@@ -22,13 +21,13 @@ class CoroPgsqlErrorMaker
     {
         $errorInfo = $client->errorInfo ?? ['unknown', -1, $client->error ?? ''];
 
-        $e = new PDOException(static::format($client), $errorInfo[1], null);
+        $e = new PDOException(static::format($client, $errorInfo), $errorInfo[1], null);
         $e->errorInfo = $errorInfo;
 
         return $e;
     }
 
-    public static function format(PostgreSQL $client): string
+    protected static function format(PostgreSQL $client, array $errorInfo): string
     {
         $message = $client->error;
 
@@ -36,16 +35,12 @@ class CoroPgsqlErrorMaker
             return '';
         }
 
-        if (property_exists($client, 'errorInfo')) {
-            $errorInfo = $client->errorInfo;
-
-            $message = sprintf(
-                'SQLSTATE[%s] %d %s',
-                $errorInfo[0],
-                $errorInfo[1],
-                $message
-            );
-        }
+        $message = sprintf(
+            'SQLSTATE[%s] %d %s',
+            $errorInfo[0],
+            $errorInfo[1],
+            $message
+        );
 
         return $message;
     }
