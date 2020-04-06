@@ -12,6 +12,7 @@ namespace MakiseCo\Http\Exceptions;
 
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Http\JsonResponse;
+use MakiseCo\Http\Request;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -58,6 +59,18 @@ class ExceptionHandler implements ExceptionHandlerInterface
         $message = $exceptionInfo['message'] ?? 'Error';
         unset($exceptionInfo['message']);
 
+        $extra = [
+            'uri' => $request->getUri(),
+            'method' => $request->getMethod(),
+        ];
+
+        $userId = $this->getUserIdFromRequest($request);
+        if (null !== $userId) {
+            $extra['userId'] = $userId;
+        }
+
+        $exceptionInfo['extra'] = $extra;
+
         $this->logger->error($message, $exceptionInfo);
     }
 
@@ -74,13 +87,23 @@ class ExceptionHandler implements ExceptionHandlerInterface
         if ($e instanceof HttpExceptionInterface) {
             $statusCode = $e->getStatusCode();
             $headers = $e->getHeaders();
+
+            return new JsonResponse(
+                ['message' => $e->getMessage()],
+                $statusCode,
+                $headers
+            );
         }
+
+        $options = $this->config->get('app.debug') ?
+            JsonResponse::JSON_OPTIONS | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES :
+            JsonResponse::JSON_OPTIONS;
 
         return new JsonResponse(
             $this->convertExceptionToArray($e),
             $statusCode,
             $headers,
-            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+            $options
         );
     }
 
@@ -121,5 +144,33 @@ class ExceptionHandler implements ExceptionHandlerInterface
             'line' => $e->getLine(),
             'trace' => $e->getTrace(),
         ];
+    }
+
+    /**
+     * @param ServerRequestInterface $request
+     * @return string|int|null
+     */
+    protected function getUserIdFromRequest(ServerRequestInterface $request)
+    {
+        if (!$request instanceof Request) {
+            return null;
+        }
+
+        $context = $request->getContext();
+        if (null === $context) {
+            return null;
+        }
+
+        $authContext = $context->getAuthContext();
+        if (null === $authContext) {
+            return null;
+        }
+
+        $user = $authContext->getUser();
+        if (null === $user) {
+            return null;
+        }
+
+        return $user->getIdentifier();
     }
 }

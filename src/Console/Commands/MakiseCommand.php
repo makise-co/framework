@@ -18,7 +18,8 @@ class MakiseCommand extends Command
 {
     public function configure(): void
     {
-        $this->setName('makise:say');
+        $this->setName('inspire');
+        $this->setDescription('Makise\'s inspiring phrases');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int

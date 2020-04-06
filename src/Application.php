@@ -185,4 +185,9 @@ class Application implements ApplicationInterface
             $console->add($instance);
         }
     }
+
+    public function getVersion(): string
+    {
+        return '0.0.2';
+    }
 }

@@ -22,7 +22,6 @@
         "php": "^7.4",
         "ext-swoole": "^4.4",
         "ext-json": "*",
-        "ext-pdo": "*",
         "open-smf/connection-pool": "~1.0",
         "symfony/console": "^5.0",
         "psr/log": "^1.1",
@@ -35,11 +34,11 @@
         "psr/http-server-middleware": "^1.0",
         "symfony/http-foundation": "^5.0",
         "symfony/property-access": "^5.0",
-        "symfony/finder": "^5.0"
+        "symfony/finder": "^5.0",
+        "symfony/var-dumper": "^5.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^9.0",
-        "symfony/var-dumper": "^5.0",
         "phpstan/phpstan": "^0.12.18",
         "swoole/ide-helper": "^4.4"
     },
