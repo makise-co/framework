@@ -94,7 +94,7 @@ class Application implements ApplicationInterface
     protected function bootEnv(): void
     {
         $repository = RepositoryBuilder::create()
-            ->withReaders([new EnvConstAdapter])
+            ->withReaders([new EnvConstAdapter, new PutenvAdapter])
             ->withWriters([new EnvConstAdapter, new PutenvAdapter])
             ->make();
 
@@ -155,7 +155,7 @@ class Application implements ApplicationInterface
     {
         $providers = $this->container
             ->get(ConfigRepositoryInterface::class)
-            ->get('app.providers');
+            ->get('app.providers', []);
 
         foreach ($providers as $provider) {
             $instance = $this->container->make($provider);
@@ -174,7 +174,7 @@ class Application implements ApplicationInterface
 
         $commands = $this->container
             ->get(ConfigRepositoryInterface::class)
-            ->get('app.commands');
+            ->get('app.commands', []);
 
         foreach ($commands as $command) {
             $instance = $this->container->make($command);
@@ -191,6 +191,6 @@ class Application implements ApplicationInterface
 
     public function getVersion(): string
     {
-        return '0.0.2';
+        return '0.0.4';
     }
 }
