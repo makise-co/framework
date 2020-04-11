@@ -38,11 +38,6 @@ class ExceptionHandler implements ExceptionHandlerInterface
         $this->logger = $logger;
     }
 
-    /**
-     * @param Throwable $e
-     * @param \MakiseCo\Http\Request|ServerRequestInterface $request
-     * @return ResponseInterface
-     */
     public function handle(Throwable $e, ServerRequestInterface $request): ResponseInterface
     {
         if ($this->shouldReport($e)) {
@@ -60,7 +55,7 @@ class ExceptionHandler implements ExceptionHandlerInterface
         unset($exceptionInfo['message']);
 
         $extra = [
-            'uri' => $request->getUri(),
+            'uri' => $request->getUri()->__toString(),
             'method' => $request->getMethod(),
         ];
 
@@ -74,11 +69,6 @@ class ExceptionHandler implements ExceptionHandlerInterface
         $this->logger->error($message, $exceptionInfo);
     }
 
-    /**
-     * @param ServerRequestInterface $request
-     * @param Throwable $e
-     * @return ResponseInterface
-     */
     protected function render(ServerRequestInterface $request, Throwable $e): ResponseInterface
     {
         $statusCode = 500;

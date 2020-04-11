@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Config;
 
+use MakiseCo\Util\PropertyAccessorHelper;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\PropertyAccess\PropertyAccessorInterface;
 
@@ -27,12 +28,14 @@ class Repository implements ConfigRepositoryInterface
      */
     protected array $keysCache = [];
 
-    public function __construct()
+    public function __construct(array $items = [])
     {
         $this->accessor = PropertyAccess::createPropertyAccessorBuilder()
             ->disableExceptionOnInvalidIndex()
             ->disableExceptionOnInvalidPropertyPath()
             ->getPropertyAccessor();
+
+        $this->items = $items;
     }
 
     public function get(string $key, $default = null)
@@ -101,17 +104,7 @@ class Repository implements ConfigRepositoryInterface
             return $value;
         }
 
-        if (false !== \strpos($key, '.')) {
-            $parts = \array_map(
-                fn(string $key) => "[{$key}]",
-                \explode('.', $key)
-            );
-            $newKey = \implode('', $parts);
-        } elseif ('[' !== ($key[0] ?? '')) {
-            $newKey = "[{$key}]";
-        } else {
-            $newKey = $key;
-        }
+        $newKey = PropertyAccessorHelper::fromDotNotation($key);
 
         $this->keysCache[$key] = $newKey;
 

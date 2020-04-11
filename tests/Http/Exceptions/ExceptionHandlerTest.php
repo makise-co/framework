@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Tests\Http\Exceptions;
 
+use InvalidArgumentException;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Config\Repository;
 use MakiseCo\Http\Exceptions\ExceptionHandler;
@@ -18,7 +19,6 @@ use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
-use InvalidArgumentException;
 
 use function array_key_exists;
 
@@ -61,7 +61,7 @@ class ExceptionHandlerTest extends TestCase
             ->willReturn(true);
 
         $method = 'GET';
-        $uri = '/makise';
+        $uri = '/makise?some=1';
         $message = 'Something went wrong';
 
         $logger = $this->getFakeLogger();

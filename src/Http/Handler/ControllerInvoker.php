@@ -47,7 +47,7 @@ class ControllerInvoker extends Invoker
         return $this->call($handler, $args);
     }
 
-    public function __debugInfo()
+    public function __debugInfo(): array
     {
         return [];
     }

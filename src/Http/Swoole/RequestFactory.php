@@ -17,6 +17,7 @@ use Symfony\Component\HttpFoundation\ParameterBag;
 
 use function array_key_exists;
 use function in_array;
+use function json_decode;
 use function parse_str;
 use function str_replace;
 use function strpos;
@@ -67,14 +68,36 @@ class RequestFactory
             new FakeStream($content),
         );
 
-        if (0 === strpos($makiseRequest->headers->get('CONTENT_TYPE', ''), 'application/x-www-form-urlencoded')
-            && in_array(strtoupper($makiseRequest->server->get('REQUEST_METHOD', 'GET')), ['PUT', 'DELETE', 'PATCH'])
-        ) {
-            parse_str($content, $data);
-            $makiseRequest->request = new ParameterBag($data);
-        }
+        $this->decodeContent($makiseRequest, $content);
 
         return $makiseRequest;
+    }
+
+    protected function decodeContent(Request $request, string $content): void
+    {
+        if ('' === $content) {
+            return;
+        }
+
+        $contentType = $request->headers->get('CONTENT_TYPE', '');
+        $requestMethod = $request->server->get('REQUEST_METHOD', 'GET');
+
+        if (0 === strpos($contentType, 'application/x-www-form-urlencoded')
+            && in_array($requestMethod, ['PUT', 'DELETE', 'PATCH'])
+        ) {
+            parse_str($content, $data);
+            $request->request = new ParameterBag($data);
+        }
+
+        if (0 === strpos($contentType, 'application/json')
+            && in_array($requestMethod, ['POST', 'PUT', 'DELETE', 'PATCH'])
+        ) {
+            // TODO: Benchmark it versus try/catch
+            $data = json_decode($content, true);
+            if (false !== $data) {
+                $request->request = new ParameterBag((array)$data);
+            }
+        }
     }
 
     protected function transformServer(array $server, array $headers): array
