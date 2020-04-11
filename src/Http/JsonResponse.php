@@ -20,6 +20,13 @@ class JsonResponse extends Response
 {
     public const JSON_OPTIONS = JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE;
 
+    /**
+     * JsonResponse constructor.
+     * @param mixed $body
+     * @param int $status
+     * @param array $headers
+     * @param int $options
+     */
     public function __construct($body, int $status = 200, array $headers = [], int $options = self::JSON_OPTIONS)
     {
         $encoded = json_encode($body, $options);

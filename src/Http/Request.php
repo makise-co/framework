@@ -24,7 +24,10 @@ class Request extends SymfonyRequest implements ServerRequestInterface
     protected $content;
 
     protected ?RequestContextInterface $context = null;
+
     protected Route $route;
+
+    protected ?Uri $psrUri = null;
 
     public function setContext(RequestContextInterface $context): self
     {
@@ -148,9 +151,13 @@ class Request extends SymfonyRequest implements ServerRequestInterface
         return $self;
     }
 
-    public function getUri()
+    public function getUri(): UriInterface
     {
-        return $this->getRequestUri();
+        if (null === $this->psrUri) {
+            $this->psrUri = new Uri($this->getRequestUri());
+        }
+
+        return $this->psrUri;
     }
 
     public function withUri(UriInterface $uri, $preserveHost = false): self

@@ -1,8 +1,11 @@
 parameters:
-    level: 6
+    level: 8
     paths:
         - src
-#        - tests
+        - tests
 
     checkMissingIterableValueType: false
     treatPhpDocTypesAsCertain: false
+
+includes:
+    - vendor/phpstan/phpstan-phpunit/extension.neon
