@@ -13,9 +13,11 @@ namespace MakiseCo\Http\Router;
 use FastRoute\DataGenerator;
 use FastRoute\RouteParser;
 use MakiseCo\Http\Handler\RouteInvokeHandler;
+use MakiseCo\Util\Arr;
 
 use function array_key_exists;
-use function array_merge_recursive;
+use function mb_strpos;
+use function rtrim;
 
 class RouteCollector
 {
@@ -81,9 +83,15 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function addRoute($httpMethod, $route, $handler): void
+    public function addRoute($httpMethod, string $route, $handler): void
     {
+        $route = $this->fixGroupPrefix($route);
+
         $route = $this->currentGroupPrefix . $route;
+        if ('' === $route) {
+            $route = '/';
+        }
+
         $routeDatas = $this->routeParser->parse($route);
 
         $handler = $this->handlerFactory->create($handler, $this->currentGroupParameters['namespace'] ?? '');
@@ -137,13 +145,26 @@ class RouteCollector
         $previousGroupPrefix = $this->currentGroupPrefix;
         $previousGroupParameters = $this->currentGroupParameters;
 
+        $prefix = $this->fixGroupPrefix($prefix);
+
         $this->currentGroupPrefix = $previousGroupPrefix . $prefix;
-        $this->currentGroupParameters = array_merge_recursive($previousGroupParameters, $parameters);
+        $this->currentGroupParameters = Arr::mergeRecursive(false, $previousGroupParameters, $parameters);
 
         $callback($this);
 
         $this->currentGroupPrefix = $previousGroupPrefix;
         $this->currentGroupParameters = $previousGroupParameters;
+    }
+
+    protected function fixGroupPrefix(string $prefix): string
+    {
+        // add slash to the begin of prefix
+        if (0 !== mb_strpos($prefix, '/')) {
+            $prefix = '/' . $prefix;
+        }
+
+        // remove slash from the end of prefix
+        return rtrim($prefix, '/');
     }
 
     /**
@@ -167,7 +188,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function get($route, $handler): void
+    public function get(string $route, $handler): void
     {
         $this->addRoute('GET', $route, $handler);
     }
@@ -180,7 +201,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function post($route, $handler): void
+    public function post(string $route, $handler): void
     {
         $this->addRoute('POST', $route, $handler);
     }
@@ -193,7 +214,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function put($route, $handler): void
+    public function put(string $route, $handler): void
     {
         $this->addRoute('PUT', $route, $handler);
     }
@@ -206,7 +227,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function delete($route, $handler): void
+    public function delete(string $route, $handler): void
     {
         $this->addRoute('DELETE', $route, $handler);
     }
@@ -219,7 +240,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function patch($route, $handler): void
+    public function patch(string $route, $handler): void
     {
         $this->addRoute('PATCH', $route, $handler);
     }
@@ -232,7 +253,7 @@ class RouteCollector
      * @param string $route
      * @param mixed $handler
      */
-    public function head($route, $handler): void
+    public function head(string $route, $handler): void
     {
         $this->addRoute('HEAD', $route, $handler);
     }

@@ -12,6 +12,7 @@ namespace MakiseCo\Http\Router;
 
 use Closure;
 use DI\Container;
+use Psr\Http\Message\ResponseInterface;
 
 use function array_key_exists;
 use function class_exists;
@@ -44,17 +45,25 @@ class RouteHandlerFactory
     public function create($handler, string $namespace = ''): Closure
     {
         if ($handler instanceof Closure) {
+            $this->validateReturnType($handler, $handler);
+
             return $handler;
         }
 
         if (is_callable($handler)) {
             // TODO: Support caching for array syntax
 
-            return Closure::fromCallable($handler);
+            $closure = Closure::fromCallable($handler);
+            $this->validateReturnType($handler, $closure);
+
+            return $closure;
         }
 
         if (is_string($handler)) {
-            return $this->createFromString($namespace . $handler);
+            $closure = $this->createFromString($namespace . $handler);
+            $this->validateReturnType($handler, $closure);
+
+            return $closure;
         }
 
         throw new Exception\WrongRouteHandlerException('Unsupported handler', $handler);
@@ -95,5 +104,38 @@ class RouteHandlerFactory
         $this->controllers[$class] = $controller;
 
         return $this->handlers[$handler] = Closure::fromCallable($callable);
+    }
+
+    protected function validateReturnType($handler, Closure $closure): void
+    {
+        $reflectionFunction = new \ReflectionFunction($closure);
+        $returnType = $reflectionFunction->getReturnType();
+        if (null === $returnType || $returnType->allowsNull()) {
+            throw new Exception\WrongRouteHandlerException(
+                'Handler must declare its return type to the ResponseInterface or its implementation (not null)',
+                $handler
+            );
+        }
+
+        $typeName = $returnType->getName();
+        if ($typeName === ResponseInterface::class) {
+            return;
+        }
+
+        try {
+            $reflectionClass = new \ReflectionClass($typeName);
+        } catch (\ReflectionException $e) {
+            throw new Exception\WrongRouteHandlerException(
+                'Handler must declare its return type to the ResponseInterface or its implementation (not null)',
+                $handler
+            );
+        }
+
+        if (!$reflectionClass->implementsInterface(ResponseInterface::class)) {
+            throw new Exception\WrongRouteHandlerException(
+                'Handler must declare its return type to the ResponseInterface or its implementation (not null)',
+                $handler
+            );
+        }
     }
 }
