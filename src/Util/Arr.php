@@ -54,4 +54,33 @@ class Arr
 
         return array_keys($keys) !== $keys;
     }
+
+    /**
+     * Merges multiple arrays, recursively, and returns the merged array.
+     *
+     * @param bool $preserveIntegerKeys
+     * @param array ...$arrays
+     * @return array
+     */
+    public static function mergeRecursive(bool $preserveIntegerKeys, array ...$arrays): array
+    {
+        $result = [];
+
+        foreach ($arrays as $array) {
+            foreach ($array as $key => $value) {
+                // Renumber integer keys as array_merge_recursive() does unless
+                // $preserveIntegerKeys is set to TRUE. Note that PHP automatically
+                // converts array keys that are integer strings (e.g., '1') to integers.
+                if (is_int($key) && !$preserveIntegerKeys) {
+                    $result[] = $value;
+                } elseif (isset($result[$key]) && is_array($result[$key]) && is_array($value)) {
+                    $result[$key] = static::mergeRecursive($preserveIntegerKeys, $result[$key], $value);
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+        }
+
+        return $result;
+    }
 }

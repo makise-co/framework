@@ -16,6 +16,7 @@ class TraitsCollector
 {
     /**
      * Get all traits that are used in class
+     * Performs recursive search of traits
      *
      * @param ReflectionClass $class
      * @return ReflectionClass[] map in format trait name => ReflectionClass

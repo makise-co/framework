@@ -23,11 +23,21 @@ class RouteHandler
         $this->pipeline = $pipeline;
     }
 
+    /**
+     * Get closure that will invoke route action
+     *
+     * @return Closure
+     */
     public function getClosure(): Closure
     {
         return $this->closure;
     }
 
+    /**
+     * Get middleware pipeline that should be executed before route action
+     *
+     * @return MiddlewarePipeline|null
+     */
     public function getPipeline(): ?MiddlewarePipeline
     {
         return $this->pipeline;
