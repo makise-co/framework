@@ -71,30 +71,42 @@ class ExceptionHandler implements ExceptionHandlerInterface
 
     protected function render(ServerRequestInterface $request, Throwable $e): ResponseInterface
     {
-        $statusCode = 500;
-        $headers = [];
-
         if ($e instanceof HttpExceptionInterface) {
-            $statusCode = $e->getStatusCode();
-            $headers = $e->getHeaders();
-
-            return new JsonResponse(
-                ['message' => $e->getMessage()],
-                $statusCode,
-                $headers
-            );
+            return $this->renderHttpException($request, $e);
         }
 
-        $options = $this->config->get('app.debug') ?
-            JsonResponse::JSON_OPTIONS | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES :
-            JsonResponse::JSON_OPTIONS;
+        return $this->renderThrowable($request, $e);
+    }
 
+
+    protected function renderThrowable(ServerRequestInterface $request, Throwable $e): JsonResponse
+    {
         return new JsonResponse(
             $this->convertExceptionToArray($e),
+            500,
+            [],
+            $this->getJsonOptions()
+        );
+    }
+
+    protected function renderHttpException(ServerRequestInterface $request, HttpExceptionInterface $e): JsonResponse
+    {
+        $statusCode = $e->getStatusCode();
+        $headers = $e->getHeaders();
+
+        return new JsonResponse(
+            ['message' => $e->getMessage()],
             $statusCode,
             $headers,
-            $options
+            $this->getJsonOptions()
         );
+    }
+
+    protected function getJsonOptions(): int
+    {
+        return $this->config->get('app.debug') ?
+            JsonResponse::JSON_OPTIONS | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES :
+            JsonResponse::JSON_OPTIONS;
     }
 
     protected function shouldReport(Throwable $e): bool
