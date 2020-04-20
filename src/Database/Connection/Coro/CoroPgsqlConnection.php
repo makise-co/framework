@@ -92,7 +92,6 @@ class CoroPgsqlConnection extends Connection
             return $statement;
         });
 
-
         while ($record = $this->pgClient->fetchObject($statement->resource)) {
             yield $record;
         }
