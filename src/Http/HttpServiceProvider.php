@@ -13,6 +13,7 @@ namespace MakiseCo\Http;
 use DI\Container;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Database\DatabaseManager;
+use MakiseCo\Http\Events\WorkerExit;
 use MakiseCo\Http\Events\WorkerStarted;
 use MakiseCo\Http\Exceptions\ExceptionHandler;
 use MakiseCo\Http\Exceptions\ExceptionHandlerInterface;
@@ -46,6 +47,13 @@ class HttpServiceProvider implements ServiceProviderInterface
                 WorkerStarted::class,
                 function () use ($container) {
                     $container->get(DatabaseManager::class)->initPools();
+                }
+            );
+
+            $this->dispatcher->addListener(
+                WorkerExit::class,
+                function () use ($container) {
+                    $container->get(DatabaseManager::class)->closePools();
                 }
             );
         }
