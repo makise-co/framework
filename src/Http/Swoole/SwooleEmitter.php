@@ -82,13 +82,6 @@ final class SwooleEmitter
 
         $body->rewind();
 
-        if ($body->getSize() <= static::CHUNK_SIZE) {
-            $swooleResponse->write($body->getContents());
-            $swooleResponse->end();
-
-            return;
-        }
-
         while (!$body->eof()) {
             $swooleResponse->write($body->read(static::CHUNK_SIZE));
         }
