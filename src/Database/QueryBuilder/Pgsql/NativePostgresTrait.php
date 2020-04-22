@@ -41,7 +41,7 @@ trait NativePostgresTrait
         // bind values against ?-mark placeholders, but because PDO is finicky
         // about the numbering of sequential placeholders, convert each ?-mark
         // to a named placeholder
-        $parts = preg_split('/(\?)/', $cond, null, PREG_SPLIT_DELIM_CAPTURE);
+        $parts = preg_split('/(\?)/', $cond, 0, PREG_SPLIT_DELIM_CAPTURE);
 
         foreach ($parts as $key => $val) {
             if ($val !== '?') {
