@@ -82,7 +82,7 @@ trait NativePostgresTrait
      * @return $this
      *
      */
-    public function where($cond, array ...$args): self
+    public function where($cond, ...$args): self
     {
         array_unshift($args, $cond);
 
@@ -105,7 +105,7 @@ trait NativePostgresTrait
      * @return $this
      *
      */
-    public function orWhere($cond, array ...$args): self
+    public function orWhere($cond, ...$args): self
     {
         array_unshift($args, $cond);
 
