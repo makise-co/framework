@@ -334,15 +334,18 @@ trait MakesHttpRequests
         $content = null
     ): TestResponse {
         $server['REQUEST_METHOD'] = $method;
-        $server['REQUEST_URI'] = $uri;
+        $server['REQUEST_URI'] = rawurldecode(parse_url($uri, PHP_URL_PATH));
 
         /* @var RequestHandler $kernel */
         $kernel = $this->container->get(RequestHandler::class);
 
         $files = array_merge($files, $this->extractFilesFromDataArray($parameters));
 
+        $query = [];
+        parse_str(parse_url($uri, PHP_URL_QUERY) ?? '', $query);
+
         $request = new Request(
-            [],
+            $query,
             $parameters,
             [],
             $cookies,
