@@ -341,6 +341,7 @@ trait MakesHttpRequests
 
         $files = array_merge($files, $this->extractFilesFromDataArray($parameters));
 
+        $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY) ?? '', $query);
 
         $request = new Request(
