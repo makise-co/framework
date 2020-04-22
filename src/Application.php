@@ -13,6 +13,7 @@ namespace MakiseCo;
 use DI\Container;
 use Dotenv\Repository\Adapter\EnvConstAdapter;
 use Dotenv\Repository\Adapter\PutenvAdapter;
+use Dotenv\Repository\Adapter\ServerConstAdapter;
 use Dotenv\Repository\RepositoryBuilder;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Config\Repository;
@@ -94,8 +95,8 @@ class Application implements ApplicationInterface
     protected function bootEnv(): void
     {
         $repository = RepositoryBuilder::create()
-            ->withReaders([new EnvConstAdapter, new PutenvAdapter])
-            ->withWriters([new EnvConstAdapter, new PutenvAdapter])
+            ->withReaders([new EnvConstAdapter, new PutenvAdapter, new ServerConstAdapter])
+            ->withWriters([new EnvConstAdapter, new PutenvAdapter, new ServerConstAdapter])
             ->make();
 
         Env::setRepository($repository);
@@ -110,11 +111,12 @@ class Application implements ApplicationInterface
         $dotenv->safeLoad();
 
         // load env-scoped variables
-        if (\array_key_exists('APP_ENV', $_ENV)) {
+        $env = Env::get('APP_ENV', null);
+        if (null !== $env) {
             \Dotenv\Dotenv::create(
                 $repository,
                 [$this->appDir . DIRECTORY_SEPARATOR],
-                [".env.{$_ENV['APP_ENV']}"],
+                [".env.{$env}"],
                 true
             )->safeLoad();
         }
