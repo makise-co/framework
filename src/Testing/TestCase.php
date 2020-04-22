@@ -13,6 +13,7 @@ namespace MakiseCo\Testing;
 
 use DI\Container;
 use MakiseCo\ApplicationInterface;
+use MakiseCo\Testing\Concerns\DatabaseTransactions;
 use MakiseCo\Util\TraitsCollector;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
@@ -60,6 +61,12 @@ abstract class TestCase extends PHPUnitTestCase
 
     protected function cleanupTraits(): void
     {
+        // transactions should be cleaned up first
+        if (isset($this->traits[DatabaseTransactions::class])) {
+            $this->cleanupDatabaseTransactions();
+            unset($this->traits[DatabaseTransactions::class]);
+        }
+
         foreach ($this->traits as $trait) {
             $traitName = $trait->getShortName();
 
