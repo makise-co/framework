@@ -6,13 +6,6 @@
  * (c) Dmitry K. <coder1994@gmail.com>
  */
 
-/**
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
-
 declare(strict_types=1);
 
 namespace MakiseCo\Database\QueryBuilder\Pgsql;
@@ -41,5 +34,10 @@ final class BindHelper
         }, $data));
 
         return "{{$str}}";
+    }
+
+    public static function escapeStringForSqlLike(string $str): string
+    {
+        return addcslashes($str, '%_\\');
     }
 }

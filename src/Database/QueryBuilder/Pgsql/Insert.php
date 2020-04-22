@@ -12,9 +12,12 @@ namespace MakiseCo\Database\QueryBuilder\Pgsql;
 
 use Aura\SqlQuery\Pgsql\Insert as BaseInsert;
 
+use function count;
+use function func_get_args;
+
 class Insert extends BaseInsert
 {
-    protected int $colsCount = 0;
+    use NativePostgresTrait;
 
     /**
      *
@@ -28,11 +31,11 @@ class Insert extends BaseInsert
      */
     protected function addCol($col): self
     {
-        $this->colsCount++;
+        $colsCount = count($this->col_values) + 1;
 
         $key = $this->quoter->quoteName($col);
         // using native postgres bindings instead of PDO abstracted bindings
-        $this->col_values[$key] = "\${$this->colsCount}";
+        $this->col_values[$key] = "\${$colsCount}";
 
         $args = func_get_args();
         if (count($args) > 1) {
