@@ -24,6 +24,9 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Finder\Finder;
 
+use function date_default_timezone_set;
+use function mb_internal_encoding;
+
 class Application implements ApplicationInterface
 {
     protected bool $isBooted = false;
@@ -150,7 +153,7 @@ class Application implements ApplicationInterface
         }
 
         date_default_timezone_set($repository->get('app.timezone', 'UTC'));
-        mb_internal_encoding('UTF-8');
+        mb_internal_encoding($repository->get('app.encoding', 'UTF-8'));
     }
 
     protected function bootProviders(): void

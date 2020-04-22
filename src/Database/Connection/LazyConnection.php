@@ -25,7 +25,7 @@ class LazyConnection implements ConnectionInterface
 
     public function __destruct()
     {
-        $this->returnConnection();
+        $this->returnConnection(true);
     }
 
     public function getConnection(): ConnectionInterface
@@ -37,12 +37,12 @@ class LazyConnection implements ConnectionInterface
         return $this->connection = $this->pool->borrow();
     }
 
-    protected function returnConnection(): void
+    protected function returnConnection(bool $force = false): void
     {
         $connection = $this->connection;
 
         // connection is taken from the pool and not in the transaction
-        if (null !== $connection && 0 === $connection->getTransactionsLevel()) {
+        if (null !== $connection && ($force || 0 === $connection->getTransactionsLevel())) {
             $this->connection = null;
             $this->pool->return($connection);
         }
