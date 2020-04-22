@@ -31,7 +31,7 @@ class Insert extends BaseInsert
      */
     protected function addCol($col): self
     {
-        $colsCount = count($this->col_values) + 1;
+        $colsCount = count($this->col_values ?? []) + 1;
 
         $key = $this->quoter->quoteName($col);
         // using native postgres bindings instead of PDO abstracted bindings
