@@ -196,6 +196,6 @@ class Application implements ApplicationInterface
 
     public function getVersion(): string
     {
-        return '0.0.9';
+        return '0.0.11';
     }
 }
