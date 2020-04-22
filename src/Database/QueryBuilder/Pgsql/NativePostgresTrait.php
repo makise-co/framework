@@ -67,4 +67,50 @@ trait NativePostgresTrait
         $cond = implode('', $parts);
         return $cond;
     }
+
+    /**
+     *
+     * Adds a WHERE condition to the query by AND or OR. If the condition has
+     * ?-placeholders, additional arguments to the method will be bound to
+     * those placeholders sequentially.
+     *
+     * @param string $cond Add the condition using this operator, typically
+     * 'AND' or 'OR'.
+     *
+     * @param array $args Arguments for adding the condition.
+     *
+     * @return $this
+     *
+     */
+    public function where($cond, array ...$args): self
+    {
+        array_unshift($args, $cond);
+
+        $this->addWhere('AND', $args);
+
+        return $this;
+    }
+
+    /**
+     *
+     * Adds a WHERE condition to the query by AND or OR. If the condition has
+     * ?-placeholders, additional arguments to the method will be bound to
+     * those placeholders sequentially.
+     *
+     * @param string $cond Add the condition using this operator, typically
+     * 'AND' or 'OR'.
+     *
+     * @param array $args Arguments for adding the condition.
+     *
+     * @return $this
+     *
+     */
+    public function orWhere($cond, array ...$args): self
+    {
+        array_unshift($args, $cond);
+
+        $this->addWhere('OR', ...$args);
+
+        return $this;
+    }
 }
