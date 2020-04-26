@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace MakiseCo\Database\Connection\Coro;
 
 use MakiseCo\Database\Connection\DetectsLostConnection;
+use MakiseCo\Database\QueryBuilder\Pgsql\BindHelper;
 use Swoole\Coroutine\PostgreSQL;
 
 class CoroPgsqlStatement
@@ -23,6 +24,8 @@ class CoroPgsqlStatement
     protected bool $isClosed = false;
 
     protected string $name;
+
+    protected array $namedParams;
 
     /**
      * @var resource represents result of statement execution
@@ -44,6 +47,8 @@ class CoroPgsqlStatement
         if (!$this->client->prepare($this->name, $this->query)) {
             throw CoroPgsqlErrorMaker::make($client);
         }
+
+        $this->query = BindHelper::parseNamedParams($query, $this->namedParams);
     }
 
     public function __destruct()
@@ -59,6 +64,8 @@ class CoroPgsqlStatement
         if ($this->isClosed) {
             throw new \LogicException('Statement is closed');
         }
+
+        $bindings = BindHelper::replaceNamedParams($bindings, $this->namedParams);
 
         $this->resource = $this->client->execute($this->name, $bindings);
 
