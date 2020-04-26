@@ -25,7 +25,7 @@ class CoroPgsqlStatement
 
     protected string $name;
 
-    protected array $namedParams;
+    protected array $namedParams = [];
 
     /**
      * @var resource represents result of statement execution
