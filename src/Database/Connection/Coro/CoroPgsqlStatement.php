@@ -41,14 +41,15 @@ class CoroPgsqlStatement
     public function __construct(PostgreSQL $client, string $name, string $query)
     {
         $this->client = $client;
+
+        $query = BindHelper::parseNamedParams($query, $this->namedParams);
         $this->query = $query;
+
         $this->name = $name;
 
         if (!$this->client->prepare($this->name, $this->query)) {
             throw CoroPgsqlErrorMaker::make($client);
         }
-
-        $this->query = BindHelper::parseNamedParams($query, $this->namedParams);
     }
 
     public function __destruct()
