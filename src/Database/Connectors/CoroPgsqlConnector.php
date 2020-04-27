@@ -65,9 +65,9 @@ class CoroPgsqlConnector implements ConnectorInterface
     {
         /* @var CoroPgsqlConnection $connection */
 
-        while ($connection->getTransactionsLevel() > 0) {
-            $connection->rollback();
-        }
+//        while ($connection->getTransactionsLevel() > 0) {
+//            $connection->rollback();
+//        }
     }
 
     protected function makeConnection(string $dsn, array $config): PostgreSQL
