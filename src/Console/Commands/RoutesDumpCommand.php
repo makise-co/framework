@@ -21,12 +21,12 @@ use Symfony\Component\Console\Output\OutputInterface;
 class RoutesDumpCommand extends Command
 {
     protected ApplicationInterface $app;
-    protected RouteCollector $routes;
+    protected RouteCollector $routeCollector;
 
     public function __construct(ApplicationInterface $config, RouteCollector $routes)
     {
         $this->app = $config;
-        $this->routes = $routes;
+        $this->routeCollector = $routes;
 
         parent::__construct(null);
     }
@@ -41,49 +41,50 @@ class RoutesDumpCommand extends Command
     public function execute(InputInterface $input, OutputInterface $output): int
     {
         $table = new Table($output);
-        $table->setHeaders(['Method', 'Path', 'Parameters', 'Handler']);
+        $table->setHeaders(['Method', 'Path', 'Handler', 'Parameters', 'Attributes']);
 
         $cnt = 0;
 
-        foreach (\array_filter($this->routes->getData()) as $collection) {
-            foreach ($collection as $routes) {
-                /* @var \MakiseCo\Http\Router\Route $route */
-                foreach ($routes as $route) {
-                    $isRouteMap = \is_array($route) && \array_key_exists('routeMap', $route);
-                    if ($isRouteMap) {
-                        foreach ($route['routeMap'] as $mappedRoute) {
-                            $route = $mappedRoute[0];
+        foreach ($this->routeCollector->getRoutes() as $route) {
+            $table->setRow(
+                $cnt,
+                $this->processRoute($route)
+            );
 
-                            $table->setRow(
-                                $cnt,
-                                [
-                                    $route->getMethod(),
-                                    $route->getPath(),
-                                    ...$this->getRouteInfo($route)
-                                ]
-                            );
-
-                            $cnt++;
-                        }
-                    } else {
-                        $table->setRow(
-                            $cnt,
-                            [
-                                $route->getMethod(),
-                                $route->getPath(),
-                                ...$this->getRouteInfo($route)
-                            ]
-                        );
-
-                        $cnt++;
-                    }
-                }
-            }
+            $cnt++;
         }
 
         $table->render();
 
         return 0;
+    }
+
+    protected function processRoute(Route $route): array
+    {
+        return [
+            \implode(', ', $route->getMethods()),
+            $route->getPath(),
+            ...$this->getRouteInfo($route),
+            $this->getRouteAttributesString($route),
+        ];
+    }
+
+    protected function getRouteAttributesString(Route $route): string
+    {
+        $attributes = $route->getAttributes();
+        $attributesStr = '';
+
+        \array_walk($attributes, static function (string $key, $value) use (&$attributesStr) {
+            if (\is_array($value)) {
+                $value = \implode(', ', $value);
+            } elseif (\is_object($value)) {
+                $value = \get_class($value);
+            }
+
+            $attributesStr .= "{$key}={$value}";
+        });
+
+        return $attributesStr;
     }
 
     protected function getRouteInfo(Route $route): array
@@ -118,7 +119,7 @@ class RoutesDumpCommand extends Command
 
         foreach ($parameters as $key => $parameter) {
             if (\is_array($parameter)) {
-                $parameterValue = \implode(',', $parameter);
+                $parameterValue = \implode(', ', $parameter);
             } else {
                 $parameterValue = $parameter;
             }

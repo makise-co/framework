@@ -10,9 +10,10 @@ declare(strict_types=1);
 
 namespace MakiseCo\Auth;
 
-use MakiseCo\Http\Request;
-
-interface GuardInterface
+interface AuthenticatableInterface
 {
-    public function authenticate(Request $request): UserInterface;
+    /**
+     * @return string|int|mixed
+     */
+    public function getAuthIdentifier();
 }

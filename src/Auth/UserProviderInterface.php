@@ -14,13 +14,13 @@ interface UserProviderInterface
 {
     /**
      * @param string|int|mixed $id
-     * @return UserInterface
+     * @return AuthenticatableInterface|null
      */
-    public function retrieveById($id): UserInterface;
+    public function retrieveById($id): ?AuthenticatableInterface;
 
     /**
      * @param array $credentials
-     * @return UserInterface
+     * @return AuthenticatableInterface|null
      */
-    public function retrieveByCredentials(array $credentials): UserInterface;
+    public function retrieveByCredentials(array $credentials): ?AuthenticatableInterface;
 }

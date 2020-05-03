@@ -12,7 +12,6 @@ namespace MakiseCo\Http\Router;
 
 use FastRoute\DataGenerator;
 use FastRoute\RouteParser;
-use MakiseCo\Http\Handler\RouteInvokeHandler;
 use MakiseCo\Util\Arr;
 
 use function array_key_exists;
@@ -21,15 +20,9 @@ use function rtrim;
 
 class RouteCollector
 {
-    protected RouteInvokeHandler $routeInvokeHandler;
-
     protected RouteHandlerFactory $handlerFactory;
 
-    protected MiddlewareContainer $middlewareContainer;
-
-    protected MiddlewareFactory $middlewareFactory;
-
-    protected MiddlewarePipelineFactory $middlewarePipelineFactory;
+    protected MiddlewareHelper $middlewareHelper;
 
     protected RouteParser $routeParser;
 
@@ -43,35 +36,30 @@ class RouteCollector
     protected array $currentGroupParameters = [];
 
     /**
+     * @var Route[] holds all routes
+     */
+    protected array $routes = [];
+
+    /**
      * Constructs a route collector.
      *
-     * @param RouteInvokeHandler $routeInvokeHandler
      * @param RouteHandlerFactory $handlerFactory
-     * @param MiddlewareContainer $middlewareContainer
-     * @param MiddlewareFactory $middlewareFactory
-     * @param MiddlewarePipelineFactory $middlewarePipelineFactory
+     * @param MiddlewareHelper $middlewareHelper
      * @param RouteParser $routeParser
      * @param DataGenerator $dataGenerator
      */
     public function __construct(
-        RouteInvokeHandler $routeInvokeHandler,
         RouteHandlerFactory $handlerFactory,
-        MiddlewareContainer $middlewareContainer,
-        MiddlewareFactory $middlewareFactory,
-        MiddlewarePipelineFactory $middlewarePipelineFactory,
+        MiddlewareHelper $middlewareHelper,
         RouteParser $routeParser,
         DataGenerator $dataGenerator
     ) {
-        $this->routeInvokeHandler = $routeInvokeHandler;
         $this->handlerFactory = $handlerFactory;
-        $this->middlewareContainer = $middlewareContainer;
-        $this->middlewareFactory = $middlewareFactory;
-        $this->middlewarePipelineFactory = $middlewarePipelineFactory;
+        $this->middlewareHelper = $middlewareHelper;
 
         $this->routeParser = $routeParser;
         $this->dataGenerator = $dataGenerator;
         $this->currentGroupPrefix = '';
-        $this->middlewarePipelineFactory = $middlewarePipelineFactory;
     }
 
     /**
@@ -82,8 +70,10 @@ class RouteCollector
      * @param string|string[] $httpMethod
      * @param string $route
      * @param mixed $handler
+     *
+     * @return Route
      */
-    public function addRoute($httpMethod, string $route, $handler): void
+    public function addRoute($httpMethod, string $route, $handler): Route
     {
         $route = $this->fixGroupPrefix($route);
 
@@ -92,37 +82,36 @@ class RouteCollector
             $route = '/';
         }
 
+        // Parse route URL
         $routeDatas = $this->routeParser->parse($route);
 
+        // Create route handler
         $handler = $this->handlerFactory->create($handler, $this->currentGroupParameters['namespace'] ?? '');
         $pipeline = null;
 
+        $routeInstance = new Route(
+            (array)$httpMethod,
+            $route,
+            $routeDatas,
+            new RouteHandler($handler, $pipeline),
+            $this->currentGroupParameters + ['group' => $this->currentGroupPrefix],
+            $this->middlewareHelper
+        );
+        $this->addGroupParametersToRoute($routeInstance);
+
         foreach ((array)$httpMethod as $method) {
             foreach ($routeDatas as $routeData) {
-                $routeInstance = new Route(
-                    $method,
-                    $route,
-                    $routeData,
-                    new RouteHandler($handler, $pipeline),
-                    $this->currentGroupParameters
-                );
-
                 $this->dataGenerator->addRoute(
                     $method,
                     $routeData,
                     $routeInstance
                 );
-
-                if (array_key_exists('middleware', $this->currentGroupParameters)) {
-                    $pipeline = $this->middlewarePipelineFactory->create(
-                        $this->routeInvokeHandler,
-                        $this->currentGroupParameters['middleware']
-                    );
-
-                    $routeInstance->getHandler()->setPipeline($pipeline);
-                }
             }
         }
+
+        $this->routes[] = $route;
+
+        return $routeInstance;
     }
 
     /**
@@ -156,6 +145,129 @@ class RouteCollector
         $this->currentGroupParameters = $previousGroupParameters;
     }
 
+    /**
+     * Adds a GET route to the collection
+     *
+     * This is simply an alias of $this->addRoute('GET', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function get(string $route, $handler): Route
+    {
+        return $this->addRoute('GET', $route, $handler);
+    }
+
+    /**
+     * Adds a POST route to the collection
+     *
+     * This is simply an alias of $this->addRoute('POST', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function post(string $route, $handler): Route
+    {
+        return $this->addRoute('POST', $route, $handler);
+    }
+
+    /**
+     * Adds a PUT route to the collection
+     *
+     * This is simply an alias of $this->addRoute('PUT', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function put(string $route, $handler): Route
+    {
+        return $this->addRoute('PUT', $route, $handler);
+    }
+
+    /**
+     * Adds a DELETE route to the collection
+     *
+     * This is simply an alias of $this->addRoute('DELETE', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function delete(string $route, $handler): Route
+    {
+        return $this->addRoute('DELETE', $route, $handler);
+    }
+
+    /**
+     * Adds a PATCH route to the collection
+     *
+     * This is simply an alias of $this->addRoute('PATCH', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function patch(string $route, $handler): Route
+    {
+        return $this->addRoute('PATCH', $route, $handler);
+    }
+
+    /**
+     * Adds a HEAD route to the collection
+     *
+     * This is simply an alias of $this->addRoute('HEAD', $route, $handler)
+     *
+     * @param string $route
+     * @param mixed $handler
+     * @return Route
+     */
+    public function head(string $route, $handler): Route
+    {
+        return $this->addRoute('HEAD', $route, $handler);
+    }
+
+    /**
+     * Returns the collected route data, as provided by the data generator.
+     *
+     * @return array<array<mixed>>
+     */
+    public function getData(): array
+    {
+        return $this->dataGenerator->getData();
+    }
+
+    /**
+     * Returns all routes
+     *
+     * @return Route[]
+     */
+    public function getRoutes(): array
+    {
+        return $this->routes;
+    }
+
+    protected function addGroupParametersToRoute(Route $route): void
+    {
+        foreach ($this->currentGroupParameters as $key => $value) {
+            switch ($key) {
+                case 'middleware':
+                    $pipeline = $this->middlewareHelper->buildPipeline($this->currentGroupParameters['middleware']);
+
+                    $route->getHandler()->setPipeline($pipeline);
+                    break;
+                // ignore namespace parameter
+                case 'namespace':
+                    break;
+                // copy all other group parameters to route attributes
+                default:
+                    $route->withAttribute($key, $value);
+            }
+        }
+    }
+
     protected function fixGroupPrefix(string $prefix): string
     {
         // add slash to the begin of prefix
@@ -172,99 +284,6 @@ class RouteCollector
      */
     protected function handleMiddlewareParameter(array $middlewareList): void
     {
-        foreach ($middlewareList as $middleware) {
-            if (!$this->middlewareContainer->has($middleware)) {
-                $middlewareObj = $this->middlewareFactory->create($middleware);
-                $this->middlewareContainer->add($middlewareObj);
-            }
-        }
-    }
-
-    /**
-     * Adds a GET route to the collection
-     *
-     * This is simply an alias of $this->addRoute('GET', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function get(string $route, $handler): void
-    {
-        $this->addRoute('GET', $route, $handler);
-    }
-
-    /**
-     * Adds a POST route to the collection
-     *
-     * This is simply an alias of $this->addRoute('POST', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function post(string $route, $handler): void
-    {
-        $this->addRoute('POST', $route, $handler);
-    }
-
-    /**
-     * Adds a PUT route to the collection
-     *
-     * This is simply an alias of $this->addRoute('PUT', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function put(string $route, $handler): void
-    {
-        $this->addRoute('PUT', $route, $handler);
-    }
-
-    /**
-     * Adds a DELETE route to the collection
-     *
-     * This is simply an alias of $this->addRoute('DELETE', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function delete(string $route, $handler): void
-    {
-        $this->addRoute('DELETE', $route, $handler);
-    }
-
-    /**
-     * Adds a PATCH route to the collection
-     *
-     * This is simply an alias of $this->addRoute('PATCH', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function patch(string $route, $handler): void
-    {
-        $this->addRoute('PATCH', $route, $handler);
-    }
-
-    /**
-     * Adds a HEAD route to the collection
-     *
-     * This is simply an alias of $this->addRoute('HEAD', $route, $handler)
-     *
-     * @param string $route
-     * @param mixed $handler
-     */
-    public function head(string $route, $handler): void
-    {
-        $this->addRoute('HEAD', $route, $handler);
-    }
-
-    /**
-     * Returns the collected route data, as provided by the data generator.
-     *
-     * @return array<array<mixed>>
-     */
-    public function getData(): array
-    {
-        return $this->dataGenerator->getData();
+        $this->middlewareHelper->registerMiddleware($middlewareList);
     }
 }

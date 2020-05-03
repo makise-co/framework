@@ -10,7 +10,6 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http;
 
-use MakiseCo\Http\Router\Route;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\StreamInterface;
 use Psr\Http\Message\UriInterface;
@@ -23,35 +22,7 @@ class Request extends SymfonyRequest implements ServerRequestInterface
      */
     protected $content;
 
-    protected ?RequestContextInterface $context = null;
-
-    protected Route $route;
-
     protected ?Uri $psrUri = null;
-
-    public function setContext(RequestContextInterface $context): self
-    {
-        $this->context = $context;
-
-        return $this;
-    }
-
-    public function getContext(): ?RequestContextInterface
-    {
-        return $this->context;
-    }
-
-    public function setRoute(Route $route): self
-    {
-        $this->route = $route;
-
-        return $this;
-    }
-
-    public function getRoute(): Route
-    {
-        return $this->route;
-    }
 
     public function getContent(bool $asResource = false): StreamInterface
     {
@@ -78,9 +49,7 @@ class Request extends SymfonyRequest implements ServerRequestInterface
 
     public function getHeader($name): array
     {
-        $iterator = $this->headers->getIterator();
-
-        return (array)($iterator[$name] ?? []);
+        return $this->headers->all($name);
     }
 
     public function getHeaderLine($name): string
