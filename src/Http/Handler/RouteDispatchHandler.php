@@ -47,8 +47,13 @@ class RouteDispatchHandler implements RequestHandlerInterface
 
                 $this->validateRoute($route);
 
-                $request->setRoute($route);
+                $request->attributes->set('route', $route);
                 $request->attributes->set('args', $routeArgs);
+
+                // transfer route attributes to the request attributes
+                foreach ($route->getAttributes() as $key => $value) {
+                    $request->attributes->set($key, $value);
+                }
 
                 $handler = $route->getHandler();
                 $pipeline = $handler->getPipeline();

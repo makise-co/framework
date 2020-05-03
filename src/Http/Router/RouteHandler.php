@@ -45,10 +45,6 @@ class RouteHandler
 
     public function setPipeline(MiddlewarePipeline $pipeline): void
     {
-        if (null !== $this->pipeline) {
-            throw new \LogicException('Pipeline could be set only once');
-        }
-
         $this->pipeline = $pipeline;
     }
 }

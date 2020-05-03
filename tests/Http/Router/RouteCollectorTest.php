@@ -17,6 +17,7 @@ use MakiseCo\Http\JsonResponse;
 use MakiseCo\Http\Router\Exception\WrongRouteHandlerException;
 use MakiseCo\Http\Router\MiddlewareContainer;
 use MakiseCo\Http\Router\MiddlewareFactory;
+use MakiseCo\Http\Router\MiddlewareHelper;
 use MakiseCo\Http\Router\MiddlewarePipelineFactory;
 use MakiseCo\Http\Router\RouteCollector;
 use MakiseCo\Http\Router\RouteHandlerFactory;
@@ -52,14 +53,48 @@ class RouteCollectorTest extends TestCase
         $middlewarePipelineFactory = new MiddlewarePipelineFactory($middlewareContainer);
 
         return new RouteCollector(
-            $invokeHandler,
             $handlerFactory,
-            $middlewareContainer,
-            $middlewareFactory,
-            $middlewarePipelineFactory,
+            new MiddlewareHelper(
+                $invokeHandler,
+                $middlewareContainer,
+                $middlewareFactory,
+                $middlewarePipelineFactory
+            ),
             new \FastRoute\RouteParser\Std(),
             new \FastRoute\DataGenerator\GroupCountBased()
         );
+    }
+
+    public function testAddRouteWithAttributes(): void
+    {
+        $collector = $this->getCollector();
+
+        $route = $collector
+            ->get('test', function (): JsonResponse {
+                return new JsonResponse([]);
+            })
+            ->withAttribute('some_attr', 'Makise');
+
+        $this->assertEquals('Makise', $route->getAttribute('some_attr'));
+    }
+
+    public function testAddRouteWithMiddleware(): void
+    {
+        $collector = $this->getCollector();
+
+        $route = $collector
+            ->get('test', function (): JsonResponse {
+                return new JsonResponse([]);
+            })
+            ->withMiddleware(Middleware1::class)
+            ->withMiddleware(Middleware2::class);
+
+        $this->assertEquals(
+            [Middleware1::class, Middleware2::class],
+            $route->getParameter('middleware')
+        );
+
+        $this->assertNotNull($route->getHandler()->getPipeline());
     }
 
     public function testAddRoute(): void
@@ -182,9 +217,15 @@ class RouteCollectorTest extends TestCase
             [
                 'namespace' => __NAMESPACE__ . '\\Stubs\\',
                 'middleware' => Middleware1::class,
+                'attribute1' => ['some', 'some2'],
             ],
             function (RouteCollector $routes) {
-                $routes->get('/', 'StubController@index');
+                $route = $routes->get('/', 'StubController@index');
+
+                $this->assertEquals(
+                    ['some', 'some2'],
+                    $route->getAttribute('attribute1')
+                );
 
                 $routes->addGroup(
                     'news',
@@ -193,7 +234,12 @@ class RouteCollectorTest extends TestCase
                         'middleware' => Middleware2::class,
                     ],
                     function (RouteCollector $routes) {
-                        $routes->get('/some', 'SubStubController@index');
+                        $route = $routes->get('/some', 'SubStubController@index');
+
+                        $this->assertEquals(
+                            ['some', 'some2'],
+                            $route->getAttribute('attribute1')
+                        );
                     }
                 );
 
@@ -202,9 +248,15 @@ class RouteCollectorTest extends TestCase
                     [
                         'namespace' => __NAMESPACE__ . '\\Stubs\\SubStubs\\',
                         'middleware' => Middleware3::class,
+                        'attribute1' => ['access2'],
                     ],
                     function (RouteCollector $routes) {
-                        $routes->get('/some', 'SubStubController@index');
+                        $route = $routes->get('/some', 'SubStubController@index');
+
+                        $this->assertEquals(
+                            ['some', 'some2', 'access2'],
+                            $route->getAttribute('attribute1')
+                        );
                     }
                 );
             }

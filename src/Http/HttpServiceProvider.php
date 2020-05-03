@@ -24,6 +24,7 @@ use MakiseCo\Http\Handler\RouteInvokeHandler;
 use MakiseCo\Http\Middleware\ExceptionHandlerMiddleware;
 use MakiseCo\Http\Router\MiddlewareContainer;
 use MakiseCo\Http\Router\MiddlewareFactory;
+use MakiseCo\Http\Router\MiddlewareHelper;
 use MakiseCo\Http\Router\MiddlewarePipelineFactory;
 use MakiseCo\Http\Router\RouteCollector;
 use MakiseCo\Http\Router\RouteHandlerFactory;
@@ -89,11 +90,13 @@ class HttpServiceProvider implements ServiceProviderInterface
             $middlewareContainer = $container->get(MiddlewareContainer::class);
 
             $routes = new RouteCollector(
-                $container->get(RouteInvokeHandler::class),
                 new RouteHandlerFactory($container),
-                $middlewareContainer,
-                new MiddlewareFactory($container),
-                new MiddlewarePipelineFactory($middlewareContainer),
+                new MiddlewareHelper(
+                    $container->get(RouteInvokeHandler::class),
+                    $middlewareContainer,
+                    new MiddlewareFactory($container),
+                    new MiddlewarePipelineFactory($middlewareContainer),
+                ),
                 new \FastRoute\RouteParser\Std(),
                 new \FastRoute\DataGenerator\GroupCountBased()
             );
@@ -139,7 +142,7 @@ class HttpServiceProvider implements ServiceProviderInterface
 
                 // boot global middlewares
                 foreach ($config->get('http.middleware', []) as $middleware) {
-                    $container->add($factory->create($middleware));
+                    $container->add($factory->create($middleware, []));
                 }
 
                 return $container;

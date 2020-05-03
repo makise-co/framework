@@ -10,9 +10,9 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http\Exceptions;
 
+use MakiseCo\Auth\AuthenticatableInterface;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Http\JsonResponse;
-use MakiseCo\Http\Request;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -154,25 +154,11 @@ class ExceptionHandler implements ExceptionHandlerInterface
      */
     protected function getUserIdFromRequest(ServerRequestInterface $request)
     {
-        if (!$request instanceof Request) {
-            return null;
+        $user = $request->getAttribute(AuthenticatableInterface::class, null);
+        if ($user instanceof AuthenticatableInterface) {
+            return $user->getAuthIdentifier();
         }
 
-        $context = $request->getContext();
-        if (null === $context) {
-            return null;
-        }
-
-        $authContext = $context->getAuthContext();
-        if (null === $authContext) {
-            return null;
-        }
-
-        $user = $authContext->getUser();
-        if (null === $user) {
-            return null;
-        }
-
-        return $user->getIdentifier();
+        return null;
     }
 }
