@@ -109,7 +109,7 @@ class RouteCollector
             }
         }
 
-        $this->routes[] = $route;
+        $this->routes[] = $routeInstance;
 
         return $routeInstance;
     }
