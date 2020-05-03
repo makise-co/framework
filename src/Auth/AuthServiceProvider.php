@@ -27,7 +27,7 @@ class AuthServiceProvider implements ServiceProviderInterface
         $authManager = $container->make(AuthManager::class);
         $container->set(AuthManager::class, $authManager);
 
-        foreach ($config->get('providers') as $name => $params) {
+        foreach ($config->get('auth.providers') as $name => $params) {
             if (is_array($params) && array_key_exists('class', $params)) {
                 $class = $params['class'];
                 unset($params['class']);
@@ -41,8 +41,8 @@ class AuthServiceProvider implements ServiceProviderInterface
         }
 
         foreach ($config->get('auth.guards', []) as $name => $guard) {
-            ['guard' => $class, 'provider' => $provider] = $guard;
-            unset($guard['guard'], $guard['provider']);
+            ['class' => $class, 'provider' => $provider] = $guard;
+            unset($guard['class'], $guard['provider']);
 
             $authManager->addGuard($name, $class, $provider, $guard);
         }
