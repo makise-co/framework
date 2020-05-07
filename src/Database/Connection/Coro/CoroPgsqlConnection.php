@@ -210,8 +210,14 @@ class CoroPgsqlConnection extends Connection
     protected function reconnect(): void
     {
         $this->statementsCache = [];
+        $this->pgClient = null;
 
-        $this->pgClient = ($this->reconnector)($this);
+        $client = ($this->reconnector)($this);
+        if (null !== $client->error) {
+            throw CoroPgsqlErrorMaker::make($client);
+        }
+
+        $this->pgClient = $client;
     }
 
     protected function reconnectIfMissingConnection(): void
