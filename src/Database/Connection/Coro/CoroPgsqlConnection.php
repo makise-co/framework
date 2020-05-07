@@ -34,7 +34,13 @@ class CoroPgsqlConnection extends Connection
 
     public function __construct(PgClient $pgClient, Closure $reconnector, string $name, int $id, string $uniqId)
     {
-        $this->pgClient = $pgClient;
+        // accept only valid pgClient instance
+        if (null === $pgClient->error) {
+            $this->pgClient = $pgClient;
+        } else {
+            $this->pgClient = null;
+        }
+
         $this->reconnector = $reconnector;
         $this->name = $name;
         $this->id = $id;

@@ -72,10 +72,7 @@ class CoroPgsqlConnector implements ConnectorInterface
     protected function makeConnection(string $dsn, array $config): PostgreSQL
     {
         $client = new PostgreSQL();
-        $client->connect($dsn);
-
-        // connection successful
-        if (null === $client->error) {
+        if ($client->connect($dsn)) {
             $this->prepareConnection($client, $config);
         }
 
