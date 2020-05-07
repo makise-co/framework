@@ -11,9 +11,9 @@ declare(strict_types=1);
 namespace MakiseCo\Database\Connectors;
 
 use MakiseCo\Database\Connection\Coro\CoroPgsqlConnection;
+use MakiseCo\Database\Connection\Coro\CoroPgsqlErrorMaker;
 use Smf\ConnectionPool\Connectors\ConnectorInterface;
 use Swoole\Coroutine\PostgreSQL;
-
 use function implode;
 
 class CoroPgsqlConnector implements ConnectorInterface
@@ -75,7 +75,10 @@ class CoroPgsqlConnector implements ConnectorInterface
         $client = new PostgreSQL();
         $client->connect($dsn);
 
-        $this->prepareConnection($client, $config);
+        // connection successful
+        if (null === $client->error) {
+            $this->prepareConnection($client, $config);
+        }
 
         return $client;
     }
