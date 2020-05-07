@@ -211,7 +211,7 @@ class CoroPgsqlConnection extends Connection
     {
         $this->statementsCache = [];
 
-        ($this->reconnector)($this);
+        $this->pgClient = ($this->reconnector)($this);
     }
 
     protected function reconnectIfMissingConnection(): void
