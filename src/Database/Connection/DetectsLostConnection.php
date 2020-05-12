@@ -51,6 +51,7 @@ trait DetectsLostConnection
             'Login timeout expired',
             'Connection refused',
             'running with the --read-only option so it cannot execute this statement',
+            'the database system is starting up',
         ];
 
         foreach ($patterns as $pattern) {
@@ -97,6 +98,7 @@ trait DetectsLostConnection
             'Login timeout expired',
             'Connection refused',
             'running with the --read-only option so it cannot execute this statement',
+            'the database system is starting up',
         ];
 
         foreach ($patterns as $pattern) {

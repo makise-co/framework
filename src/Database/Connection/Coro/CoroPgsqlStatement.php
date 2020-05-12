@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Database\Connection\Coro;
 
+use MakiseCo\Database\Connection\Coro\Exception\StatementClosedException;
 use MakiseCo\Database\Connection\DetectsLostConnection;
 use MakiseCo\Database\QueryBuilder\Pgsql\BindHelper;
 use Swoole\Coroutine\PostgreSQL;
@@ -63,7 +64,7 @@ class CoroPgsqlStatement
     public function execute(array $bindings = []): void
     {
         if ($this->isClosed) {
-            throw new \LogicException('Statement is closed');
+            throw new StatementClosedException();
         }
 
         $bindings = BindHelper::replaceNamedParams($bindings, $this->namedParams);
@@ -94,5 +95,10 @@ class CoroPgsqlStatement
 
         $this->client->query('DEALLOCATE ' . $this->name);
         $this->client = null;
+    }
+
+    public function isClosed(): bool
+    {
+        return $this->isClosed;
     }
 }
