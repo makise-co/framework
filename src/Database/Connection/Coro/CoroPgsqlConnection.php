@@ -30,6 +30,10 @@ class CoroPgsqlConnection extends Connection
     protected string $uniqId;
 
     protected bool $shouldReuseStatements = true;
+
+    /**
+     * @var CoroPgsqlStatement[]
+     */
     protected array $statementsCache = [];
 
     public function __construct(PgClient $pgClient, Closure $reconnector, string $name, int $id, string $uniqId)
@@ -220,6 +224,11 @@ class CoroPgsqlConnection extends Connection
 
         $client = ($this->reconnector)($this);
         if (null !== $client->error) {
+            // when swoole postgres client can't connect to server it sets ontimeout
+            if ('ontimeout' === $client->error) {
+                $client->error = 'Connection refused';
+            }
+
             throw CoroPgsqlErrorMaker::make($client);
         }
 
@@ -238,7 +247,11 @@ class CoroPgsqlConnection extends Connection
         $stmtName = $this->uniqId . md5($query);
 
         if ($this->shouldReuseStatements && null !== ($stmt = $this->statementsCache[$stmtName] ?? null)) {
-            return $stmt;
+            if ($stmt->isClosed()) {
+                $this->statementsCache[$stmtName] = null;
+            } else {
+                return $stmt;
+            }
         }
 
         $stmt = new CoroPgsqlStatement($this->pgClient, $stmtName, $query);
