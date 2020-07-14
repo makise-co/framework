@@ -23,7 +23,9 @@
         "sort-packages": true
     },
     "suggest": {
-        "ext-swoole_postgresql": "Needed to work with PostgreSQL database"
+        "ext-swoole_postgresql": "Needed to work with PostgreSQL database via Swoole Driver",
+        "makise-co/postgres": "To work with modern PostgreSQL Coroutine driver",
+        "ext-pq": "To work with modern PostgreSQL Coroutine driver"
     },
     "require": {
         "php": "^7.4",
@@ -46,10 +48,11 @@
         "vlucas/phpdotenv": "^4.1"
     },
     "require-dev": {
-        "phpunit/phpunit": "^9.0",
+        "makise-co/postgres": "^1.0",
         "phpstan/phpstan": "^0.12.18",
-        "swoole/ide-helper": "^4.4",
-        "phpstan/phpstan-phpunit": "^0.12.6"
+        "phpstan/phpstan-phpunit": "^0.12.6",
+        "phpunit/phpunit": "^9.0",
+        "swoole/ide-helper": "^4.4"
     },
     "autoload": {
         "psr-4": {

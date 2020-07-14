@@ -190,6 +190,7 @@ class PdoConnection extends Connection
             throw new QueryException(
                 $e->getMessage(),
                 (int)$e->getCode(),
+                $e->errorInfo[0] ?? '',
                 $query,
                 $bindings,
                 $e

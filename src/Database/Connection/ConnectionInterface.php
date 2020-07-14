@@ -48,7 +48,7 @@ interface ConnectionInterface
     public function cursor(string $query, array $bindings = []): \Generator;
     public function unprepared(string $query): bool;
 
-    public function begin(): void;
+    public function begin();
     public function commit(): void;
     public function rollback(): void;
 

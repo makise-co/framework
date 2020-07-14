@@ -329,6 +329,7 @@ class CoroPgsqlConnection extends Connection
         return new QueryException(
             $pdoException->getMessage(),
             (int)$pdoException->getCode(),
+            $pdoException->errorInfo[0] ?? '',
             $query,
             $bindings,
             $pdoException
