@@ -78,6 +78,11 @@ class DatabaseManager implements DisposableInterface
         $this->pools[$name] = $pool;
     }
 
+    public function addPool(string $name, ConnectionPool $pool): void
+    {
+        $this->pools[$name] = $pool;
+    }
+
     public function addConnector(string $driver, ConnectorInterface $connector): void
     {
         $this->connectors[$driver] = $connector;

@@ -10,27 +10,26 @@ declare(strict_types=1);
 
 namespace MakiseCo\Database\Exceptions;
 
+use MakiseCo\Postgres\Exception\QueryExecutionError;
 use Throwable;
 
 class QueryException extends \RuntimeException
 {
     protected string $query;
     protected array $bindings = [];
-    private string $sqlState = '';
+    protected string $sqlState;
 
     public function __construct(
         string $message,
         int $code,
+        string $sqlState,
         string $query,
         array $bindings,
         ?Throwable $previous
     ) {
         parent::__construct($message, $code, $previous);
 
-        if ($previous instanceof \PDOException && isset($previous->errorInfo[0])) {
-            $this->sqlState = (string)$previous->errorInfo[0];
-        }
-
+        $this->sqlState = $sqlState;
         $this->query = $query;
         $this->bindings = $bindings;
     }

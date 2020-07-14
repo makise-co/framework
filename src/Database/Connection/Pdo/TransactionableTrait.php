@@ -82,6 +82,7 @@ trait TransactionableTrait
             return new QueryException(
                 $e->getMessage(),
                 (int)$e->getCode(),
+                $e->errorInfo[0] ?? '',
                 $query,
                 [],
                 $e
