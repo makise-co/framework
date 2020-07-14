@@ -29,7 +29,7 @@ class CoroPgsqlConnection extends Connection
     protected int $id;
     protected string $uniqId;
 
-    protected bool $shouldReuseStatements = true;
+    protected bool $shouldReuseStatements = false;
 
     /**
      * @var CoroPgsqlStatement[]
