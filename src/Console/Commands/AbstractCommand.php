@@ -1,0 +1,79 @@
+<?php
+/*
+ * This file is part of the Makise-Co Framework
+ *
+ * World line: 0.571024a
+ * (c) Dmitry K. <coder1994@gmail.com>
+ */
+
+/*
+ * This file is part of the Makise-Co Framework
+ *
+ * World line: 0.571024a
+ * (c) Dmitry K. <coder1994@gmail.com>
+ */
+
+declare(strict_types=1);
+
+namespace MakiseCo\Console\Commands;
+
+use Closure;
+use MakiseCo\ApplicationInterface;
+use MakiseCo\Console\CommandOutput;
+use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
+
+abstract class AbstractCommand extends SymfonyCommand
+{
+    protected ApplicationInterface $app;
+
+    protected InputInterface $input;
+    protected CommandOutput $output;
+
+    protected string $name = '';
+    protected string $description = '';
+    protected array $arguments = [];
+    protected array $options = [];
+
+    public function __construct(ApplicationInterface $app)
+    {
+        parent::__construct(null);
+
+        $this->app = $app;
+    }
+
+    protected function configure(): void
+    {
+        $this->setName($this->name);
+        $this->setDescription($this->description);
+
+        $this->defineArguments();
+        $this->defineOptions();
+    }
+
+    protected function defineArguments(): void
+    {
+        foreach ($this->arguments as $argument) {
+            $this->addArgument(...$argument);
+        }
+    }
+
+    protected function defineOptions(): void
+    {
+        foreach ($this->options as $option) {
+            $this->addOption(...$option);
+        }
+    }
+
+    final public function execute(InputInterface $input, OutputInterface $output): int
+    {
+        $this->input = $input;
+        $this->output = new CommandOutput($output);
+
+        $container = $this->app->getContainer();
+        $closure = Closure::fromCallable([$this, 'handle']);
+
+        return $container->call($closure) ?? 0;
+    }
+}

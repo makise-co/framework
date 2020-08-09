@@ -1,54 +1,71 @@
 <?php
-/**
- * File: Command.php
- * Author: Dmitry K. <dmitry.k@brainex.co>
- * Date: 2020-03-09
- * Copyright (c) 2020
+/*
+ * This file is part of the Makise-Co Framework
+ *
+ * World line: 0.571024a
+ * (c) Dmitry K. <coder1994@gmail.com>
  */
 
 declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use MakiseCo\ApplicationInterface;
-use Symfony\Component\Console\Command\Command as SymfonyCommand;
+use Closure;
+use Swoole\Coroutine;
+use Swoole\Event;
+use Swoole\Runtime;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
+use Throwable;
 
-abstract class CoroutineCommand extends SymfonyCommand
+use function Swoole\Coroutine\run;
+
+abstract class CoroutineCommand extends AbstractCommand
 {
-    protected ApplicationInterface $app;
-
-    public function __construct(ApplicationInterface $app)
-    {
-        $this->app = $app;
-
-        parent::__construct(null);
-    }
-
     public function run(InputInterface $input, OutputInterface $output): int
     {
-        $result = 0;
-        /* @var \Throwable $ex */
-        $ex = null;
-
-        \Swoole\Coroutine\run(function (InputInterface $input, OutputInterface $output) use (&$result, &$ex) {
-            // Make old synchronous calls - asynchronous
-            \Swoole\Runtime::enableCoroutine();
-
-            try {
-                $result = parent::run($input, $output);
-            } catch (\Throwable $e) {
-                $ex = $e;
-            } finally {
-                $this->app->terminate();
-            }
-        }, $input, $output);
-
-        if (null !== $ex) {
-            throw $ex;
+        // command is invoked from another coroutine
+        if (Coroutine::getCid() > 0) {
+            return parent::run($input, $output);
         }
 
-        return $result;
+        $result = new CoroutineCommandResult();
+
+        run(
+            Closure::fromCallable([$this, 'execCoro']),
+            $input,
+            $output,
+            $result
+        );
+
+        if (null !== $result->ex) {
+            throw $result->ex;
+        }
+
+        return $result->result;
+    }
+
+    private function execCoro(InputInterface $input, OutputInterface $output, CoroutineCommandResult $result): void
+    {
+        Coroutine::defer(
+            static function () {
+                // do not block command coroutine exit if programmer have forgotten to release event loop
+                if (Coroutine::stats()['event_num'] > 0) {
+                    // force exit event loop
+                    Event::exit();
+                }
+            }
+        );
+
+        // Make old synchronous calls - asynchronous
+        Runtime::enableCoroutine();
+
+        try {
+            $result->result = parent::run($input, $output);
+        } catch (Throwable $e) {
+            $result->ex = $e;
+        } finally {
+            $this->app->terminate();
+        }
     }
 }
