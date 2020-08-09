@@ -18,7 +18,7 @@ class DumpEnvCommand extends AbstractCommand
     public function handle(): void
     {
         foreach ($_ENV as $key => $value) {
-            $this->output->writeln("<comment>{$key}</comment>=<info>{$value}</info>");
+            $this->writeln("<comment>{$key}</comment>=<info>{$value}</info>");
         }
     }
 }

@@ -45,11 +45,11 @@ class StartHttpSeverCommand extends AbstractCommand
 
     public function handle(EventDispatcher $dispatcher, LoggerInterface $logger, HttpServer $server): void
     {
-        $port = $this->input->getOption('port');
+        $port = $this->getOption('port');
         if (null !== $port) {
             $port = (int)$port;
         }
-        $host = $this->input->getOption('host');
+        $host = $this->getOption('host');
 
         $dispatcher->addListener(
             ServerStarted::class,

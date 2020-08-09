@@ -24,7 +24,7 @@ class DumpConfigCommand extends AbstractCommand
 
     public function handle(ConfigRepositoryInterface $config): void
     {
-        $path = $this->input->getArgument('path');
+        $path = $this->getArgument('path');
 
         if (null === $path) {
             dump($config->toArray());

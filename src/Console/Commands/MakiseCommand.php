@@ -25,7 +25,7 @@ class MakiseCommand extends AbstractCommand
 
         $phrase = self::PHRASES[$rand];
 
-        $this->output->writeln("<info>{$phrase}</info>");
+        $this->info($phrase);
     }
 
     protected const PHRASES = [

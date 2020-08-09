@@ -1,12 +1,5 @@
 <?php
-/*
- * This file is part of the Makise-Co Framework
- *
- * World line: 0.571024a
- * (c) Dmitry K. <coder1994@gmail.com>
- */
-
-/*
+/**
  * This file is part of the Makise-Co Framework
  *
  * World line: 0.571024a
@@ -19,17 +12,16 @@ namespace MakiseCo\Console\Commands;
 
 use Closure;
 use MakiseCo\ApplicationInterface;
-use MakiseCo\Console\CommandOutput;
+use MakiseCo\Console\Traits\CommandTrait;
 use Symfony\Component\Console\Command\Command as SymfonyCommand;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 abstract class AbstractCommand extends SymfonyCommand
 {
-    protected ApplicationInterface $app;
+    use CommandTrait;
 
-    protected InputInterface $input;
-    protected CommandOutput $output;
+    protected ApplicationInterface $app;
 
     protected string $name = '';
     protected string $description = '';
@@ -69,7 +61,7 @@ abstract class AbstractCommand extends SymfonyCommand
     final public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->input = $input;
-        $this->output = new CommandOutput($output);
+        $this->output = $output;
 
         $container = $this->app->getContainer();
         $closure = Closure::fromCallable([$this, 'handle']);
