@@ -52,7 +52,7 @@ class AbstractCommandTest extends TestCase
 
             public function handle(): void
             {
-                $this->output->write('Hello, Okabe');
+                $this->write('Hello, Okabe');
             }
         };
     }
