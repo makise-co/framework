@@ -14,6 +14,7 @@ use Closure;
 use Swoole\Coroutine;
 use Swoole\Event;
 use Swoole\Runtime;
+use Swoole\Timer;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Throwable;
@@ -54,6 +55,8 @@ abstract class CoroutineCommand extends AbstractCommand
                     // force exit event loop
                     Event::exit();
                 }
+
+                Timer::clearAll();
             }
         );
 
