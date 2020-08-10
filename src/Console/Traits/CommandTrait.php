@@ -84,7 +84,7 @@ trait CommandTrait
      * Identical to write function but provides ability to format message. Does not add new line.
      *
      * @param string $format
-     * @param array ...$args
+     * @param ...$args
      */
     protected function sprintf(string $format, ...$args)
     {
