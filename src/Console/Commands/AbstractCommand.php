@@ -30,9 +30,9 @@ abstract class AbstractCommand extends SymfonyCommand
 
     public function __construct(ApplicationInterface $app)
     {
-        parent::__construct(null);
-
         $this->app = $app;
+
+        parent::__construct(null);
     }
 
     protected function configure(): void

@@ -18,7 +18,7 @@ class DumpConfigCommand extends AbstractCommand
     protected string $name = 'config:dump';
     protected string $description = 'Show app configuration';
 
-    protected array $options = [
+    protected array $arguments = [
         ['path', InputArgument::OPTIONAL, 'Specific config path', null],
     ];
 

@@ -14,7 +14,7 @@ use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Http\Events\ServerStarted;
 use MakiseCo\Http\HttpServer;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Console\Input\InputArgument;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class StartHttpSeverCommand extends AbstractCommand
@@ -29,7 +29,7 @@ class StartHttpSeverCommand extends AbstractCommand
         $this->addOption(
             'host',
             null,
-            InputArgument::OPTIONAL,
+            InputOption::VALUE_OPTIONAL,
             'Server host',
             $config->get('http.host', '127.0.0.1')
         );
@@ -37,7 +37,7 @@ class StartHttpSeverCommand extends AbstractCommand
         $this->addOption(
             'port',
             'p',
-            InputArgument::OPTIONAL,
+            InputOption::VALUE_OPTIONAL,
             'Server port',
             $config->get('http.port', 10228)
         );
