@@ -10,37 +10,18 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use MakiseCo\ApplicationInterface;
 use MakiseCo\Http\Router\Route;
 use MakiseCo\Http\Router\RouteCollector;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
 
-class RoutesDumpCommand extends Command
+class RoutesDumpCommand extends AbstractCommand
 {
-    protected ApplicationInterface $app;
-    protected RouteCollector $routeCollector;
+    protected string $name = 'routes:dump';
+    protected string $description = 'Prints all app HTTP routes';
 
-    public function __construct(ApplicationInterface $config, RouteCollector $routes)
+    public function handle(RouteCollector $routeCollector): void
     {
-        $this->app = $config;
-        $this->routeCollector = $routes;
-
-        parent::__construct(null);
-    }
-
-    protected function configure(): void
-    {
-        $this->setName('routes:dump');
-
-        $this->setDescription('Prints all app HTTP routes');
-    }
-
-    public function execute(InputInterface $input, OutputInterface $output): int
-    {
-        $table = new Table($output);
+        $table = new Table($this->output);
         $table->setHeaders(['Method', 'Path', 'Handler', 'Parameters', 'Attributes']);
         $table->setColumnMaxWidth(0, 30);
         $table->setColumnMaxWidth(1, 60);
@@ -50,7 +31,7 @@ class RoutesDumpCommand extends Command
 
         $cnt = 0;
 
-        foreach ($this->routeCollector->getRoutes() as $route) {
+        foreach ($routeCollector->getRoutes() as $route) {
             $table->setRow(
                 $cnt,
                 $this->processRoute($route)
@@ -60,8 +41,6 @@ class RoutesDumpCommand extends Command
         }
 
         $table->render();
-
-        return 0;
     }
 
     protected function processRoute(Route $route): array
@@ -79,15 +58,18 @@ class RoutesDumpCommand extends Command
         $attributes = $route->getAttributes();
         $attributesStr = '';
 
-        \array_walk($attributes, static function ($value, string $key) use (&$attributesStr) {
-            if (\is_array($value)) {
-                $value = \implode(', ', $value);
-            } elseif (\is_object($value)) {
-                $value = \get_class($value);
-            }
+        \array_walk(
+            $attributes,
+            static function ($value, string $key) use (&$attributesStr) {
+                if (\is_array($value)) {
+                    $value = \implode(', ', $value);
+                } elseif (\is_object($value)) {
+                    $value = \get_class($value);
+                }
 
-            $attributesStr .= "{$key}={$value}" . PHP_EOL;
-        });
+                $attributesStr .= "{$key}={$value}" . PHP_EOL;
+            }
+        );
 
         return $attributesStr;
     }

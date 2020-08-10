@@ -26,6 +26,12 @@ class MakisePgsqlConnectionTest extends TestCase
 {
     public function testIntegration(): void
     {
+        if (!\extension_loaded('pq')) {
+            $this->markTestSkipped('pq extenstion is not installed');
+
+            return;
+        }
+
         $this->runCoroutineTestCase(function (DatabaseManager $databaseManager) {
             $connection = $databaseManager->getLazyConnection('test');
 

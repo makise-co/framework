@@ -10,11 +10,7 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-
-class MakiseCommand extends Command
+class MakiseCommand extends AbstractCommand
 {
     public function configure(): void
     {
@@ -22,16 +18,14 @@ class MakiseCommand extends Command
         $this->setDescription('Makise\'s inspiring phrases');
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function handle(): void
     {
         $count = \count(self::PHRASES);
         $rand = \random_int(0, $count - 1);
 
         $phrase = self::PHRASES[$rand];
 
-        $output->writeln("<info>{$phrase}</info>");
-
-        return 0;
+        $this->info($phrase);
     }
 
     protected const PHRASES = [

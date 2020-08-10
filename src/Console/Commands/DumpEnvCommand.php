@@ -10,25 +10,15 @@ declare(strict_types=1);
 
 namespace MakiseCo\Console\Commands;
 
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
-
-class DumpEnvCommand extends Command
+class DumpEnvCommand extends AbstractCommand
 {
-    protected function configure(): void
-    {
-        $this->setName('env:dump');
+    protected string $name = 'env:dump';
+    protected string $description = 'Show loaded environment variables';
 
-        $this->setDescription('Show loaded environment variables');
-    }
-
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function handle(): void
     {
         foreach ($_ENV as $key => $value) {
-            $output->writeln("<comment>{$key}</comment>=<info>{$value}</info>");
+            $this->writeln("<comment>{$key}</comment>=<info>{$value}</info>");
         }
-
-        return 0;
     }
 }
