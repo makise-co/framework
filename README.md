@@ -21,7 +21,7 @@
 * Фреймворк реализует API, схожее с Laravel
 * Фреймворк использует общепринятые библетеки, такие как:
     * symfony/console
-    * symfony/http-foundation
+    * laminas/laminas-diactoros
     * symfony/event-dispatcher
     * monolog/monolog
     * phpdi/phpdi
@@ -33,7 +33,7 @@
 * Linux
 
 ## Структура HTTP стека
-1. HTTP стек реализует стандарты PSR-7 и PSR-15 поверх symfony/http-foundation
+1. HTTP стек реализует стандарты PSR-7 и PSR-15
 2. Маршрутизация HTTP запросов осуществляется Pipeline-ориентированным путем (п.1)
 3. Порядок вызовов:
     1. RequestHandler

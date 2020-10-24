@@ -10,6 +10,8 @@ declare(strict_types=1);
 
 namespace MakiseCo\Tests\Auth\Http\Middleware;
 
+use Laminas\Diactoros\Response\TextResponse;
+use Laminas\Diactoros\ServerRequest;
 use MakiseCo\Auth\AuthorizableInterface;
 use MakiseCo\Auth\Exceptions\AccessDeniedException;
 use MakiseCo\Auth\Http\Middleware\AuthorizationMiddleware;
@@ -33,14 +35,20 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('permissions', ['test']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute('permissions', ['test'])
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            );
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -55,14 +63,20 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('permissions', ['bad']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute('permissions', ['bad'])
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            );
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
@@ -79,14 +93,20 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('roles', ['test']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute('roles', ['test'])
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            );
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -101,14 +121,20 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('roles', ['bad']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute('roles', ['bad'])
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            );
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
@@ -119,7 +145,7 @@ class AuthorizationMiddlewareTest extends TestCase
         return new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                return new Response();
+                return new TextResponse('');
             }
         };
     }

@@ -24,7 +24,7 @@ use function time;
 class TestResponse
 {
     /**
-     * @var ResponseInterface|\MakiseCo\Http\Response
+     * @var ResponseInterface|\Laminas\Diactoros\Response
      */
     protected ResponseInterface $response;
 
@@ -37,6 +37,16 @@ class TestResponse
             ->disableExceptionOnInvalidIndex()
             ->disableExceptionOnInvalidPropertyPath()
             ->getPropertyAccessor();
+    }
+
+    private function getResponseContent(): string
+    {
+        $body = $this->response->getBody();
+        $content = $body->getContents();
+
+        $body->rewind();
+
+        return $content;
     }
 
     /**
@@ -98,7 +108,7 @@ class TestResponse
     {
         $this->assertStatus($status);
 
-        PHPUnit::assertEmpty($this->response->getContent(), 'Response content is not empty.');
+        PHPUnit::assertEmpty($this->getResponseContent(), 'Response content is not empty.');
 
         return $this;
     }
@@ -341,7 +351,7 @@ class TestResponse
     {
         $value = $escaped ? htmlspecialchars($value) : $value;
 
-        PHPUnit::assertStringContainsString((string)$value, $this->response->getContent());
+        PHPUnit::assertStringContainsString((string)$value, $this->getResponseContent());
 
         return $this;
     }
@@ -357,7 +367,7 @@ class TestResponse
     {
         $values = $escaped ? array_map('htmlspecialchars', ($values)) : $values;
 
-        PHPUnit::assertThat($values, new SeeInOrder($this->response->getContent()));
+        PHPUnit::assertThat($values, new SeeInOrder($this->getResponseContent()));
 
         return $this;
     }
@@ -373,7 +383,7 @@ class TestResponse
     {
         $value = $escaped ? htmlspecialchars($value) : $value;
 
-        PHPUnit::assertStringContainsString((string)$value, strip_tags($this->response->getContent()));
+        PHPUnit::assertStringContainsString((string)$value, strip_tags($this->getResponseContent()));
 
         return $this;
     }
@@ -389,7 +399,7 @@ class TestResponse
     {
         $values = $escaped ? array_map('htmlspecialchars', ($values)) : $values;
 
-        PHPUnit::assertThat($values, new SeeInOrder(strip_tags($this->response->getContent())));
+        PHPUnit::assertThat($values, new SeeInOrder(strip_tags($this->getResponseContent())));
 
         return $this;
     }
@@ -405,7 +415,7 @@ class TestResponse
     {
         $value = $escaped ? htmlspecialchars($value) : $value;
 
-        PHPUnit::assertStringNotContainsString((string)$value, $this->response->getContent());
+        PHPUnit::assertStringNotContainsString((string)$value, $this->getResponseContent());
 
         return $this;
     }
@@ -421,7 +431,7 @@ class TestResponse
     {
         $value = $escaped ? htmlspecialchars($value) : $value;
 
-        PHPUnit::assertStringNotContainsString((string)$value, strip_tags($this->response->getContent()));
+        PHPUnit::assertStringNotContainsString((string)$value, strip_tags($this->getResponseContent()));
 
         return $this;
     }
@@ -670,7 +680,7 @@ class TestResponse
      */
     public function decodeResponseJson($key = null)
     {
-        $decodedResponse = json_decode($this->response->getContent(), true);
+        $decodedResponse = json_decode($this->getResponseContent(), true);
 
         if (null === $decodedResponse || $decodedResponse === false) {
             PHPUnit::fail('Invalid JSON was returned from the route.');
@@ -703,7 +713,7 @@ class TestResponse
      */
     public function dump(): self
     {
-        $content = $this->response->getContent();
+        $content = $this->getResponseContent();
 
         $json = json_decode($content);
 

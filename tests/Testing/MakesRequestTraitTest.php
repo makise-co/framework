@@ -11,10 +11,10 @@ declare(strict_types=1);
 namespace MakiseCo\Tests\Testing;
 
 use DI\Container;
-use MakiseCo\Http\Handler\RequestHandler;
-use MakiseCo\Http\Request;
 use MakiseCo\Testing\Concerns\MakesHttpRequests;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Server\RequestHandlerInterface;
 
 class MakesRequestTraitTest extends TestCase
 {
@@ -22,41 +22,42 @@ class MakesRequestTraitTest extends TestCase
 
     protected Container $container;
     /**
-     * @var RequestHandler|\PHPUnit\Framework\MockObject\MockObject
+     * @var RequestHandlerInterface|\PHPUnit\Framework\MockObject\MockObject
      */
-    protected RequestHandler $requestHandlerMock;
+    protected RequestHandlerInterface $requestHandlerMock;
 
     protected function setUp(): void
     {
         $this->container = new Container();
 
-        $this->requestHandlerMock = $this->createMock(RequestHandler::class);
-        $this->container->set(RequestHandler::class, $this->requestHandlerMock);
+        $this->requestHandlerMock = $this->createMock(RequestHandlerInterface::class);
+        $this->container->set('http.request_handler', $this->requestHandlerMock);
     }
 
     public function testGet(): void
     {
         $this
             ->requestHandlerMock
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('handle')
-            ->with($this->callback(function (Request $request) {
-                return '/some' === $request->getRequestUri() && 'GET' === $request->getMethod();
+            ->with(self::callback(function (ServerRequestInterface $request) {
+                return '/some' === $request->getRequestTarget() && 'GET' === $request->getMethod()
+                    && count($request->getHeaders()) === 1 && $request->getHeader('Authorization') === ['Bearer 123'];
             }));
 
-        $this->get('/some');
+        $this->get('/some', ['Authorization' => 'Bearer 123']);
     }
 
     public function testPost(): void
     {
         $this
             ->requestHandlerMock
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('handle')
-            ->with($this->callback(function (Request $request) {
-                return '/some' === $request->getRequestUri()
+            ->with(self::callback(function (ServerRequestInterface $request) {
+                return '/some' === $request->getRequestTarget()
                     && 'POST' === $request->getMethod()
-                    && 1 === $request->request->get('some');
+                    && 1 === $request->getParsedBody()['some'];
             }));
 
         $this->post('/some', ['some' => 1]);
@@ -66,13 +67,13 @@ class MakesRequestTraitTest extends TestCase
     {
         $this
             ->requestHandlerMock
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('handle')
-            ->with($this->callback(function (Request $request) {
-                return '/some' === $request->getRequestUri()
+            ->with(self::callback(function (ServerRequestInterface $request) {
+                return '/some' === $request->getRequestTarget()
                     && 'POST' === $request->getMethod()
                     && \json_encode(['some' => 1]) === $request->getBody()->__toString()
-                    && ['some' => 1] === $request->request->all();
+                    && ['some' => 1] === $request->getParsedBody();
             }));
 
         $this->postJson('/some', ['some' => 1]);

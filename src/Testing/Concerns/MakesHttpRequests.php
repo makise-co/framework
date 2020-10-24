@@ -11,13 +11,15 @@ declare(strict_types=1);
 
 namespace MakiseCo\Testing\Concerns;
 
+use Laminas\Diactoros\ServerRequest;
 use MakiseCo\Http\FakeStream;
-use MakiseCo\Http\Handler\RequestHandler;
-use MakiseCo\Http\Request;
 use MakiseCo\Testing\Http\TestResponse;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 
+/**
+ * @copyright Laravel
+ */
 trait MakesHttpRequests
 {
     /**
@@ -129,9 +131,7 @@ trait MakesHttpRequests
      */
     public function get($uri, array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('GET', $uri, [], $this->defaultCookies, [], $server);
+        return $this->call('GET', $uri, [], $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -156,9 +156,7 @@ trait MakesHttpRequests
      */
     public function post($uri, array $data = [], array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('POST', $uri, $data, $this->defaultCookies, [], $server);
+        return $this->call('POST', $uri, $data, $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -184,9 +182,7 @@ trait MakesHttpRequests
      */
     public function put($uri, array $data = [], array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('PUT', $uri, $data, $this->defaultCookies, [], $server);
+        return $this->call('PUT', $uri, $data, $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -212,9 +208,7 @@ trait MakesHttpRequests
      */
     public function patch($uri, array $data = [], array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('PATCH', $uri, $data, $this->defaultCookies, [], $server);
+        return $this->call('PATCH', $uri, $data, $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -240,9 +234,7 @@ trait MakesHttpRequests
      */
     public function delete($uri, array $data = [], array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('DELETE', $uri, $data, $this->defaultCookies, [], $server);
+        return $this->call('DELETE', $uri, $data, $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -268,9 +260,7 @@ trait MakesHttpRequests
      */
     public function options($uri, array $data = [], array $headers = []): TestResponse
     {
-        $server = $this->transformHeadersToServerVars($headers);
-
-        return $this->call('OPTIONS', $uri, $data, $this->defaultCookies, [], $server);
+        return $this->call('OPTIONS', $uri, $data, $this->defaultCookies, [], $headers);
     }
 
     /**
@@ -308,7 +298,7 @@ trait MakesHttpRequests
         ], $headers);
 
         return $this->call(
-            $method, $uri, $data, [], $files, $this->transformHeadersToServerVars($headers), $content
+            $method, $uri, $data, [], $files, $headers, $content
         );
     }
 
@@ -320,7 +310,7 @@ trait MakesHttpRequests
      * @param array $parameters
      * @param array $cookies
      * @param array $files
-     * @param array $server
+     * @param array $headers
      * @param string|null|FakeStream $content
      * @return TestResponse
      */
@@ -330,31 +320,33 @@ trait MakesHttpRequests
         $parameters = [],
         $cookies = [],
         $files = [],
-        $server = [],
+        $headers = [],
         $content = null
     ): TestResponse {
         $server['REQUEST_METHOD'] = $method;
         $server['REQUEST_URI'] = rawurldecode(parse_url($uri, PHP_URL_PATH));
 
-        /* @var RequestHandler $kernel */
-        $kernel = $this->container->get(RequestHandler::class);
+        /* @var \Psr\Http\Server\RequestHandlerInterface $handler */
+        $handler = $this->container->get(\MakiseCo\Http\HttpServiceProvider::REQUEST_HANDLER);
 
         $files = array_merge($files, $this->extractFilesFromDataArray($parameters));
 
         $query = [];
         parse_str(parse_url($uri, PHP_URL_QUERY) ?? '', $query);
 
-        $request = new Request(
-            $query,
-            $parameters,
-            [],
-            $cookies,
-            $files,
+        $request = new ServerRequest(
             array_replace($this->serverVariables, $server),
-            $content
+            $files,
+            $server['REQUEST_URI'],
+            $server['REQUEST_METHOD'],
+            $content ?? new FakeStream(''),
+            $headers,
+            $cookies,
+            $query,
+            $parameters
         );
 
-        $response = $kernel->handle($request);
+        $response = $handler->handle($request);
 
         return $this->createTestResponse($response);
     }

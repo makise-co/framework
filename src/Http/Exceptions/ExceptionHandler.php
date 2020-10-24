@@ -12,7 +12,9 @@ namespace MakiseCo\Http\Exceptions;
 
 use MakiseCo\Auth\AuthenticatableInterface;
 use MakiseCo\Config\ConfigRepositoryInterface;
-use MakiseCo\Http\JsonResponse;
+use MakiseCo\Http\Router\Exception\MethodNotAllowedException;
+use MakiseCo\Http\Router\Exception\RouteNotFoundException;
+use MakiseCo\Middleware\ErrorHandlerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -20,16 +22,15 @@ use Throwable;
 
 use function get_class;
 
-use const JSON_PRETTY_PRINT;
-use const JSON_UNESCAPED_SLASHES;
-
-class ExceptionHandler implements ExceptionHandlerInterface
+abstract class ExceptionHandler implements ErrorHandlerInterface
 {
     protected ConfigRepositoryInterface $config;
     protected LoggerInterface $logger;
 
     protected array $doNotLog = [
         HttpExceptionInterface::class,
+        RouteNotFoundException::class,
+        MethodNotAllowedException::class,
     ];
 
     public function __construct(ConfigRepositoryInterface $config, LoggerInterface $logger)
@@ -75,39 +76,33 @@ class ExceptionHandler implements ExceptionHandlerInterface
             return $this->renderHttpException($request, $e);
         }
 
+        if ($e instanceof RouteNotFoundException) {
+            return $this->renderRouteNotFound($request, $e);
+        }
+
+        if ($e instanceof MethodNotAllowedException) {
+            return $this->renderMethodNotAllowed($request, $e);
+        }
+
         return $this->renderThrowable($request, $e);
     }
 
+    abstract protected function renderThrowable(ServerRequestInterface $request, Throwable $e): ResponseInterface;
 
-    protected function renderThrowable(ServerRequestInterface $request, Throwable $e): JsonResponse
-    {
-        return new JsonResponse(
-            $this->convertExceptionToArray($e),
-            500,
-            [],
-            $this->getJsonOptions()
-        );
-    }
+    abstract protected function renderHttpException(
+        ServerRequestInterface $request,
+        HttpExceptionInterface $e
+    ): ResponseInterface;
 
-    protected function renderHttpException(ServerRequestInterface $request, HttpExceptionInterface $e): JsonResponse
-    {
-        $statusCode = $e->getStatusCode();
-        $headers = $e->getHeaders();
+    abstract protected function renderRouteNotFound(
+        ServerRequestInterface $request,
+        RouteNotFoundException $e
+    ): ResponseInterface;
 
-        return new JsonResponse(
-            ['message' => $e->getMessage()],
-            $statusCode,
-            $headers,
-            $this->getJsonOptions()
-        );
-    }
-
-    protected function getJsonOptions(): int
-    {
-        return $this->config->get('app.debug') ?
-            JsonResponse::JSON_OPTIONS | JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES :
-            JsonResponse::JSON_OPTIONS;
-    }
+    abstract protected function renderMethodNotAllowed(
+        ServerRequestInterface $request,
+        MethodNotAllowedException $e
+    ): ResponseInterface;
 
     protected function shouldReport(Throwable $e): bool
     {

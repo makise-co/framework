@@ -11,10 +11,10 @@ declare(strict_types=1);
 namespace MakiseCo\Tests\Http\Exceptions;
 
 use InvalidArgumentException;
+use Laminas\Diactoros\ServerRequest;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Config\Repository;
-use MakiseCo\Http\Exceptions\ExceptionHandler;
-use MakiseCo\Http\Request;
+use MakiseCo\Http\Exceptions\JsonExceptionHandler;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Log\LoggerInterface;
@@ -42,11 +42,15 @@ class ExceptionHandlerTest extends TestCase
 
     protected function getFakeRequest(string $method, string $uri): ServerRequestInterface
     {
-        $request = new Request();
-        $request->server->set('REQUEST_METHOD', $method);
-        $request->server->set('REQUEST_URI', $uri);
-
-        return $request;
+        return new ServerRequest(
+            [
+                'REQUEST_METHOD' => $method,
+                'REQUEST_URI' => $uri
+            ],
+            [],
+            $uri,
+            $method
+        );
     }
 
     /**
@@ -66,11 +70,11 @@ class ExceptionHandlerTest extends TestCase
 
         $logger = $this->getFakeLogger();
         $logger
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('error')
             ->with(
                 $message,
-                $this->callback(static function (array $args) use ($method, $uri) {
+                self::callback(static function (array $args) use ($method, $uri) {
                     if (!array_key_exists('extra', $args)) {
                         return false;
                     }
@@ -89,7 +93,7 @@ class ExceptionHandlerTest extends TestCase
                 })
             );
 
-        $handler = new ExceptionHandler($config, $logger);
+        $handler = new JsonExceptionHandler($config, $logger);
 
         $request = $this->getFakeRequest($method, $uri);
 
