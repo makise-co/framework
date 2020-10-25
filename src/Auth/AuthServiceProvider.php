@@ -27,7 +27,7 @@ class AuthServiceProvider implements ServiceProviderInterface
         $authManager = $container->make(AuthManager::class);
         $container->set(AuthManager::class, $authManager);
 
-        foreach ($config->get('auth.providers') as $name => $params) {
+        foreach ($config->get('auth.providers', []) as $name => $params) {
             if (is_array($params) && array_key_exists('class', $params)) {
                 $class = $params['class'];
                 unset($params['class']);
@@ -36,7 +36,7 @@ class AuthServiceProvider implements ServiceProviderInterface
             } elseif (is_string($params)) {
                 $authManager->addProvider($name, $params, []);
             } else {
-                throw new \InvalidArgumentException("Wrong provider \"$name\" configuration");
+                throw new \InvalidArgumentException("Wrong provider \"{$name}\" configuration");
             }
         }
 

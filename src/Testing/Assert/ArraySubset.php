@@ -16,6 +16,7 @@ use SebastianBergmann\Comparator\ComparisonFailure;
 use Traversable;
 
 /**
+ * @copyright Laravel
  * @internal This class is not meant to be used or overwritten outside the framework itself.
  */
 final class ArraySubset extends Constraint

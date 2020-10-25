@@ -19,6 +19,7 @@ use PHPUnit\Framework\Constraint\RegularExpression;
 use PHPUnit\Framework\InvalidArgumentException;
 
 /**
+ * @copyright Laravel
  * @internal This class is not meant to be used or overwritten outside the framework itself.
  */
 abstract class Assert extends PHPUnit

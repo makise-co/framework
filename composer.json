@@ -23,21 +23,19 @@
         "sort-packages": true
     },
     "suggest": {
-        "ext-swoole_postgresql": "Needed to work with PostgreSQL database via Swoole Driver",
         "makise-co/postgres": "To work with modern PostgreSQL Coroutine driver",
-        "ext-pq": "To work with modern PostgreSQL Coroutine driver"
+        "makise-co/orm-bundle": "To work with modern ORM",
+        "makise-co/postgres-spiral-driver": "To work with modern DBAL"
     },
     "require": {
         "php": "^7.4",
         "ext-json": "*",
         "ext-swoole": "^4.4",
-        "aura/sqlquery": "^2.7",
+        "laminas/laminas-diactoros": "^2.4",
+        "makise-co/http-router": "^1.0",
         "monolog/monolog": "^2.0",
-        "nikic/fast-route": "^1.3",
         "nunomaduro/collision": "^4.1",
-        "open-smf/connection-pool": "~1.0",
         "php-di/php-di": "^6.1",
-        "psr/http-server-middleware": "^1.0",
         "psr/log": "^1.1",
         "symfony/console": "^5.0",
         "symfony/event-dispatcher": "^5.0",
@@ -48,7 +46,6 @@
         "vlucas/phpdotenv": "^4.1"
     },
     "require-dev": {
-        "makise-co/postgres": "^1.0",
         "phpstan/phpstan": "^0.12.18",
         "phpstan/phpstan-phpunit": "^0.12.6",
         "phpunit/phpunit": "^9.0",

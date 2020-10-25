@@ -10,13 +10,15 @@ declare(strict_types=1);
 
 namespace MakiseCo\Tests\Auth\Http\Middleware;
 
+use Laminas\Diactoros\Response\TextResponse;
+use Laminas\Diactoros\ServerRequest;
 use MakiseCo\Auth\AuthenticatableInterface;
 use MakiseCo\Auth\AuthManager;
 use MakiseCo\Auth\Exceptions\UnauthenticatedException;
 use MakiseCo\Auth\Guard\GuardInterface;
 use MakiseCo\Auth\Http\Middleware\AuthenticationMiddleware;
-use MakiseCo\Http\Request;
-use MakiseCo\Http\Response;
+use MakiseCo\Http\Router\Route;
+use MakiseCo\Http\Router\RouteInterface;
 use MakiseCo\Tests\Auth\Http\Stubs\AuthFailedGuard;
 use MakiseCo\Tests\Auth\Http\Stubs\AuthSuccessGuard;
 use MakiseCo\Tests\Auth\Http\Stubs\EmptyUserProvider;
@@ -31,9 +33,20 @@ class AuthenticationMiddlewareTest extends TestCase
     {
         $middleware = new AuthenticationMiddleware($this->getAuthManager());
 
-        $request = new Request();
-        $request->attributes->set(GuardInterface::class, 'success');
-        $request->attributes->set('test', $this);
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
+        );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, 'success');
+
+        $request = $request
+            ->withAttribute(RouteInterface::class, $route)
+            ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -48,7 +61,7 @@ class AuthenticationMiddlewareTest extends TestCase
                 $test::assertInstanceOf(AuthenticatableInterface::class, $user);
                 $test::assertEquals(1, $user->getAuthIdentifier());
 
-                return new Response();
+                return new TextResponse('');
             }
         };
 
@@ -59,14 +72,25 @@ class AuthenticationMiddlewareTest extends TestCase
     {
         $middleware = new AuthenticationMiddleware($this->getAuthManager());
 
-        $request = new Request();
-        $request->attributes->set(GuardInterface::class, 'fail');
-        $request->attributes->set('test', $this);
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
+        );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, 'fail');
+
+        $request = $request
+            ->withAttribute(RouteInterface::class, $route)
+            ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                return new Response();
+                return new TextResponse('');
             }
         };
 
@@ -79,10 +103,20 @@ class AuthenticationMiddlewareTest extends TestCase
         $authManager = $this->getAuthManager();
         $middleware = new AuthenticationMiddleware($authManager);
 
-        $request = new Request();
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
+        );
 
-        $request->attributes->set(GuardInterface::class, ['fail', 'success']);
-        $request->attributes->set('test', $this);
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, ['fail', 'success']);
+
+        $request = $request
+            ->withAttribute(RouteInterface::class, $route)
+            ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
@@ -97,7 +131,7 @@ class AuthenticationMiddlewareTest extends TestCase
                 $test::assertInstanceOf(AuthenticatableInterface::class, $user);
                 $test::assertEquals(1, $user->getAuthIdentifier());
 
-                return new Response();
+                return new TextResponse('');
             }
         };
 
@@ -108,8 +142,8 @@ class AuthenticationMiddlewareTest extends TestCase
         /* @var AuthSuccessGuard $authSuccessGuard */
         $authSuccessGuard = $authManager->getGuard('success');
 
-        $this->assertTrue($authFailedGuard->isCalled());
-        $this->assertTrue($authSuccessGuard->isCalled());
+        self::assertTrue($authFailedGuard->isCalled());
+        self::assertTrue($authSuccessGuard->isCalled());
     }
 
     protected function getAuthManager(): AuthManager

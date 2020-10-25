@@ -10,11 +10,15 @@ declare(strict_types=1);
 
 namespace MakiseCo\Tests\Auth\Http\Middleware;
 
+use Laminas\Diactoros\Response\TextResponse;
+use Laminas\Diactoros\ServerRequest;
 use MakiseCo\Auth\AuthorizableInterface;
 use MakiseCo\Auth\Exceptions\AccessDeniedException;
 use MakiseCo\Auth\Http\Middleware\AuthorizationMiddleware;
 use MakiseCo\Http\Request;
 use MakiseCo\Http\Response;
+use MakiseCo\Http\Router\Route;
+use MakiseCo\Http\Router\RouteInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -33,14 +37,25 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('permissions', ['test']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            )
+            ->withAttribute('permissions', ['test']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -55,14 +70,25 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('permissions', ['bad']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            )
+            ->withAttribute('permissions', ['bad']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
@@ -79,14 +105,25 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('roles', ['test']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            )
+            ->withAttribute('roles', ['test']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -101,14 +138,25 @@ class AuthorizationMiddlewareTest extends TestCase
     {
         $middleware = new AuthorizationMiddleware();
 
-        $request = new Request();
-        $request->attributes->set(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll));
-        $request->attributes->set('test', $this);
-        $request->attributes->set('roles', ['bad']);
-        $request->attributes->set(
-            'auth_mode',
-            $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+        $request = new ServerRequest(
+            [],
+            [],
+            '/',
+            'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(
+                'auth_mode',
+                $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
+            )
+            ->withAttribute('roles', ['bad']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
@@ -119,7 +167,7 @@ class AuthorizationMiddlewareTest extends TestCase
         return new class implements RequestHandlerInterface {
             public function handle(ServerRequestInterface $request): ResponseInterface
             {
-                return new Response();
+                return new TextResponse('');
             }
         };
     }

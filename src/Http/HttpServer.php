@@ -10,10 +10,15 @@ declare(strict_types=1);
 
 namespace MakiseCo\Http;
 
+use Closure;
+use Psr\Http\Server\RequestHandlerInterface;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\Http\Server as SwooleServer;
 use Symfony\Component\EventDispatcher\EventDispatcher;
+
+use function array_merge;
+use function swoole_set_process_name;
 
 class HttpServer
 {
@@ -24,15 +29,27 @@ class HttpServer
     protected string $mode = self::MODE_MAIN;
 
     protected SwooleServer $server;
-    protected HttpKernel $kernel;
     protected EventDispatcher $eventDispatcher;
+    protected Swoole\SwoolePsrRequestFactoryInterface $requestFactory;
+    protected Swoole\SwooleEmitter $emitter;
+    protected RequestHandlerInterface $requestHandler;
+
     protected array $swooleConfig;
     protected string $appName;
 
-    public function __construct(HttpKernel $kernel, EventDispatcher $eventDispatcher, array $config, string $appName)
-    {
-        $this->kernel = $kernel;
+    public function __construct(
+        EventDispatcher $eventDispatcher,
+        Swoole\SwoolePsrRequestFactoryInterface $requestFactory,
+        Swoole\SwooleEmitter $emitter,
+        RequestHandlerInterface $requestHandler,
+        array $config,
+        string $appName
+    ) {
         $this->eventDispatcher = $eventDispatcher;
+        $this->requestFactory = $requestFactory;
+        $this->emitter = $emitter;
+        $this->requestHandler = $requestHandler;
+
         $this->swooleConfig = $config;
         $this->appName = $appName;
     }
@@ -41,7 +58,7 @@ class HttpServer
     {
         $this->server = new SwooleServer($host, $port);
         $this->server->set(
-            \array_merge(
+            array_merge(
                 [
                     'daemonize' => false,
                     'worker_num' => 1,
@@ -53,47 +70,63 @@ class HttpServer
             )
         );
 
-        $this->server->on('Start', function (SwooleServer $server) {
-            $this->setProcessTitle('master process');
+        $this->server->on(
+            'Start',
+            function (SwooleServer $server) {
+                $this->setProcessName('master process');
 
-            $this->eventDispatcher->dispatch(new Events\ServerStarted());
-        });
+                $this->eventDispatcher->dispatch(new Events\ServerStarted());
+            }
+        );
 
-        $this->server->on('ManagerStart', function (SwooleServer $server) {
-            $this->mode = self::MODE_MANAGER;
+        $this->server->on(
+            'ManagerStart',
+            function (SwooleServer $server) {
+                $this->mode = self::MODE_MANAGER;
 
-            $this->setProcessTitle('manager process');
+                $this->setProcessName('manager process');
 
-            $this->eventDispatcher->dispatch(new Events\ManagerStarted());
-        });
+                $this->eventDispatcher->dispatch(new Events\ManagerStarted());
+            }
+        );
 
-        $this->server->on('WorkerStart', function (SwooleServer $server, int $workerId) {
-            $this->mode = self::MODE_WORKER;
+        $this->server->on(
+            'WorkerStart',
+            function (SwooleServer $server, int $workerId) {
+                $this->mode = self::MODE_WORKER;
 
-            $this->setProcessTitle('worker process');
+                $this->setProcessName('worker process');
 
-            $this->eventDispatcher->dispatch(new Events\WorkerStarted($workerId));
-        });
+                $this->eventDispatcher->dispatch(new Events\WorkerStarted($workerId));
+            }
+        );
 
-        $this->server->on('WorkerStop', function (SwooleServer $server, int $workerId) {
-            $this->mode = self::MODE_WORKER;
+        $this->server->on(
+            'WorkerStop',
+            function (SwooleServer $server, int $workerId) {
+                $this->mode = self::MODE_WORKER;
 
-            $this->eventDispatcher->dispatch(new Events\WorkerStopped($workerId));
-        });
+                $this->eventDispatcher->dispatch(new Events\WorkerStopped($workerId));
+            }
+        );
 
-        $this->server->on('WorkerExit', function (SwooleServer $server, int $workerId) {
-            $this->mode = self::MODE_WORKER;
+        $this->server->on(
+            'WorkerExit',
+            function (SwooleServer $server, int $workerId) {
+                $this->mode = self::MODE_WORKER;
 
-            $this->eventDispatcher->dispatch(new Events\WorkerExit($workerId));
-        });
+                $this->eventDispatcher->dispatch(new Events\WorkerExit($workerId));
+            }
+        );
 
-        $this->server->on('Shutdown', function (SwooleServer $server) {
-            $this->eventDispatcher->dispatch(new Events\ServerShutdown());
-        });
+        $this->server->on(
+            'Shutdown',
+            function (SwooleServer $server) {
+                $this->eventDispatcher->dispatch(new Events\ServerShutdown());
+            }
+        );
 
-        $this->server->on('Request', function (Request $request, Response $response) {
-            $this->kernel->handle($request, $response);
-        });
+        $this->server->on('Request', Closure::fromCallable([$this, 'onRequest']));
 
         $this->server->start();
     }
@@ -103,19 +136,23 @@ class HttpServer
         $this->server->shutdown();
     }
 
-    public function getKernel(): HttpKernel
+    protected function onRequest(Request $request, Response $response): void
     {
-        return $this->kernel;
+        $psrRequest = $this->requestFactory->create($request);
+
+        $psrResponse = $this->requestHandler->handle($psrRequest);
+
+        $this->emitter->emit($response, $psrResponse);
     }
 
-    protected function setProcessTitle(string $title): void
+    protected function setProcessName(string $name): void
     {
         if (!empty($this->appName)) {
-            \swoole_set_process_name("{$this->appName} {$title}");
+            swoole_set_process_name("{$this->appName} {$name}");
 
             return;
         }
 
-        \swoole_set_process_name($title);
+        swoole_set_process_name($name);
     }
 }

@@ -13,6 +13,9 @@ namespace MakiseCo\Testing\Assert;
 use PHPUnit\Framework\Constraint\Constraint;
 use ReflectionClass;
 
+/**
+ * @copyright Laravel
+ */
 class SeeInOrder extends Constraint
 {
     /**

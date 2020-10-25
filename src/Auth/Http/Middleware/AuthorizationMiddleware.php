@@ -17,6 +17,8 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
+use function MakiseCo\Http\Router\Helper\getRouteAttribute;
+
 class AuthorizationMiddleware implements MiddlewareInterface
 {
     /**
@@ -51,7 +53,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
             throw new AccessDeniedException();
         }
 
-        $mode = $request->getAttribute(self::MODE, self::MODE_ALL);
+        $mode = getRouteAttribute($request, self::MODE, self::MODE_ALL);
 
         $this->authorizePermissions($request, $authorizable, $mode);
         $this->authorizeRoles($request, $authorizable, $mode);
@@ -64,7 +66,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
         AuthorizableInterface $authorizable,
         string $mode
     ): void {
-        $permissions = (array)$request->getAttribute(self::PERMISSIONS, []);
+        $permissions = (array)getRouteAttribute($request, self::PERMISSIONS, []);
         if ([] === $permissions) {
             return;
         }
@@ -90,7 +92,7 @@ class AuthorizationMiddleware implements MiddlewareInterface
         AuthorizableInterface $authorizable,
         string $mode
     ): void {
-        $roles = (array)$request->getAttribute(self::ROLES, []);
+        $roles = (array)getRouteAttribute($request, self::ROLES, []);
         if ([] === $roles) {
             return;
         }
