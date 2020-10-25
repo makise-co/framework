@@ -19,7 +19,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+
 use function is_array;
+use function MakiseCo\Http\Router\Helper\getRouteAttribute;
 
 class AuthenticationMiddleware implements MiddlewareInterface
 {
@@ -32,7 +34,7 @@ class AuthenticationMiddleware implements MiddlewareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
-        $guard = $request->getAttribute(GuardInterface::class, null);
+        $guard = getRouteAttribute($request, GuardInterface::class, null);
         if (null === $guard) {
             throw new \LogicException(sprintf('Missing "%s" attribute', GuardInterface::class));
         }

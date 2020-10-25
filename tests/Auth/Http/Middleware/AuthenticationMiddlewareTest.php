@@ -17,6 +17,8 @@ use MakiseCo\Auth\AuthManager;
 use MakiseCo\Auth\Exceptions\UnauthenticatedException;
 use MakiseCo\Auth\Guard\GuardInterface;
 use MakiseCo\Auth\Http\Middleware\AuthenticationMiddleware;
+use MakiseCo\Http\Router\Route;
+use MakiseCo\Http\Router\RouteInterface;
 use MakiseCo\Tests\Auth\Http\Stubs\AuthFailedGuard;
 use MakiseCo\Tests\Auth\Http\Stubs\AuthSuccessGuard;
 use MakiseCo\Tests\Auth\Http\Stubs\EmptyUserProvider;
@@ -37,8 +39,13 @@ class AuthenticationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, 'success');
+
         $request = $request
-            ->withAttribute(GuardInterface::class, 'success')
+            ->withAttribute(RouteInterface::class, $route)
             ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {
@@ -71,8 +78,13 @@ class AuthenticationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, 'fail');
+
         $request = $request
-            ->withAttribute(GuardInterface::class, 'fail')
+            ->withAttribute(RouteInterface::class, $route)
             ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {
@@ -97,8 +109,13 @@ class AuthenticationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
+            ->withAttribute(GuardInterface::class, ['fail', 'success']);
+
         $request = $request
-            ->withAttribute(GuardInterface::class, ['fail', 'success'])
+            ->withAttribute(RouteInterface::class, $route)
             ->withAttribute('test', $this);
 
         $handler = new class implements RequestHandlerInterface {

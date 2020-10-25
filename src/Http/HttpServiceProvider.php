@@ -22,6 +22,7 @@ use MakiseCo\Http\Swoole\SwoolePsrRequestFactoryInterface;
 use MakiseCo\Middleware\ErrorHandlerInterface;
 use MakiseCo\Middleware\ErrorHandlingMiddleware;
 use MakiseCo\Middleware\MiddlewarePipeFactory;
+use MakiseCo\Middleware\MiddlewareResolver;
 use MakiseCo\Providers\ServiceProviderInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -41,7 +42,13 @@ class HttpServiceProvider implements ServiceProviderInterface
         $container->set(
             RouteCollector::class,
             function (Container $container, ConfigRepositoryInterface $config) {
-                $collector = (new RouteCollectorLazyFactory())->create($container);
+                $factory = new RouteCollectorLazyFactory(
+                    [
+                        \Laminas\Diactoros\ServerRequest::class,
+                    ]
+                );
+
+                $collector = $factory->create($container);
 
                 $this->loadRoutes($config, $collector);
 
@@ -58,9 +65,7 @@ class HttpServiceProvider implements ServiceProviderInterface
                 ConfigRepositoryInterface $config,
                 RouteCollectorInterface $collector
             ) {
-                $middlewares = [
-                    $container->make(ErrorHandlingMiddleware::class)
-                ];
+                $middlewares = [ErrorHandlingMiddleware::class];
 
                 foreach ((array)$config->get('http.middleware', []) as $middleware) {
                     $middlewares[] = $middleware;
@@ -68,7 +73,7 @@ class HttpServiceProvider implements ServiceProviderInterface
 
                 $middlewares[] = $collector->getRouter();
 
-                return (new MiddlewarePipeFactory())
+                return (new MiddlewarePipeFactory(new MiddlewareResolver($container)))
                     ->create($middlewares);
             }
         );
@@ -81,7 +86,7 @@ class HttpServiceProvider implements ServiceProviderInterface
                     $container->get(EventDispatcher::class),
                     $container->make(SwoolePsrRequestFactoryInterface::class),
                     $container->make(SwooleEmitter::class),
-                    $container->get('http.request_handler'),
+                    $container->get(self::REQUEST_HANDLER),
                     $config->get('http.swoole', []),
                     $config->get('app.name')
                 );

@@ -17,6 +17,8 @@ use MakiseCo\Auth\Exceptions\AccessDeniedException;
 use MakiseCo\Auth\Http\Middleware\AuthorizationMiddleware;
 use MakiseCo\Http\Request;
 use MakiseCo\Http\Response;
+use MakiseCo\Http\Router\Route;
+use MakiseCo\Http\Router\RouteInterface;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
@@ -41,14 +43,19 @@ class AuthorizationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
-        $request = $request
-            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
-            ->withAttribute('test', $this)
-            ->withAttribute('permissions', ['test'])
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
             ->withAttribute(
                 'auth_mode',
                 $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
-            );
+            )
+            ->withAttribute('permissions', ['test']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -69,14 +76,19 @@ class AuthorizationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
-        $request = $request
-            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
-            ->withAttribute('test', $this)
-            ->withAttribute('permissions', ['bad'])
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
             ->withAttribute(
                 'auth_mode',
                 $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
-            );
+            )
+            ->withAttribute('permissions', ['bad']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByPermissions($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
@@ -99,14 +111,19 @@ class AuthorizationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
-        $request = $request
-            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
-            ->withAttribute('test', $this)
-            ->withAttribute('roles', ['test'])
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
             ->withAttribute(
                 'auth_mode',
                 $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
-            );
+            )
+            ->withAttribute('roles', ['test']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $middleware->process($request, $this->getEmptyHandler());
     }
@@ -127,14 +144,19 @@ class AuthorizationMiddlewareTest extends TestCase
             '/',
             'GET'
         );
-        $request = $request
-            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
-            ->withAttribute('test', $this)
-            ->withAttribute('roles', ['bad'])
+
+        $route = new Route(['GET'], '/', fn() => 1);
+        $route
             ->withAttribute(
                 'auth_mode',
                 $authModeAll ? AuthorizationMiddleware::MODE_ALL : AuthorizationMiddleware::MODE_ANY
-            );
+            )
+            ->withAttribute('roles', ['bad']);
+
+        $request = $request
+            ->withAttribute(AuthorizableInterface::class, $this->getAuthorizableByRoles($authModeAll))
+            ->withAttribute('test', $this)
+            ->withAttribute(RouteInterface::class, $route);
 
         $this->expectException(AccessDeniedException::class);
         $middleware->process($request, $this->getEmptyHandler());
