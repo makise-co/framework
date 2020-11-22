@@ -26,6 +26,7 @@ use Symfony\Component\Finder\Finder;
 
 use function date_default_timezone_set;
 use function mb_internal_encoding;
+use function gc_collect_cycles;
 
 class Application implements ApplicationInterface
 {
@@ -50,12 +51,20 @@ class Application implements ApplicationInterface
     {
         $console = $this->container->get(ConsoleApplication::class);
 
-        return $this->container->call(fn() => $console->run(new ArgvInput($argv)));
+        return $this->container->call(static fn() => $console->run(new ArgvInput($argv)));
     }
 
     public function terminate(): void
     {
-        // TODO: Implement terminate() method.
+        // flush container
+        foreach ($this->container->getKnownEntryNames() as $knownEntryName) {
+            $this->container->set($knownEntryName, null);
+        }
+
+        unset($this->container);
+
+        // toggle memory cleanup
+        gc_collect_cycles();
     }
 
     public function getAppDir(): string
@@ -196,6 +205,6 @@ class Application implements ApplicationInterface
 
     public function getVersion(): string
     {
-        return '0.0.20';
+        return '1.0.3';
     }
 }

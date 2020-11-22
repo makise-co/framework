@@ -38,6 +38,12 @@ trait DatabaseTransactions
             } catch (\Throwable $e) {
                 $this->addWarning("Unable to ROLLBACK transaction on \"{$connection}\" connection: {$e->getMessage()}");
             }
+
+            try {
+                $db->driver($connection)->disconnect();
+            } catch (\Throwable $e) {
+                $this->addWarning("Unable to disconnect \"{$connection}\" connection: {$e->getMessage()}");
+            }
         }
     }
 
