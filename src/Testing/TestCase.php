@@ -108,11 +108,14 @@ abstract class TestCase extends PHPUnitTestCase
                 $this->coroSetUp();
 
                 $result = parent::runTest();
-
-                $this->coroTearDown();
-                $this->cleanupTraits();
             } catch (\Throwable $e) {
                 $ex = $e;
+            }
+
+            try {
+                $this->coroTearDown();
+            } finally {
+                $this->cleanupTraits();
             }
         });
 
