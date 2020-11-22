@@ -13,7 +13,6 @@ namespace MakiseCo\Testing;
 
 use DI\Container;
 use MakiseCo\ApplicationInterface;
-use MakiseCo\Testing\Concerns\DatabaseTransactions;
 use MakiseCo\Util\TraitsCollector;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
@@ -35,6 +34,13 @@ abstract class TestCase extends PHPUnitTestCase
         $this->container = $this->app->getContainer();
 
         $this->setUpTraits();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->app->terminate();
+        unset($this->app, $this->container);
+        \gc_collect_cycles();
     }
 
     /**

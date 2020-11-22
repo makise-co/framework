@@ -14,6 +14,7 @@ use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Http\Events\ServerStarted;
 use MakiseCo\Http\HttpServer;
 use Psr\Log\LoggerInterface;
+use Swoole\Coroutine;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
@@ -43,8 +44,14 @@ class StartHttpSeverCommand extends AbstractCommand
         );
     }
 
-    public function handle(EventDispatcher $dispatcher, LoggerInterface $logger, HttpServer $server): void
+    public function handle(EventDispatcher $dispatcher, LoggerInterface $logger, HttpServer $server): int
     {
+        if (Coroutine::getCid() > 0) {
+            $this->error("Please run {$this->getName()} command with \"--no-coroutine\" flag");
+
+            return 1;
+        }
+
         $port = $this->getOption('port');
         if (null !== $port) {
             $port = (int)$port;
@@ -61,5 +68,7 @@ class StartHttpSeverCommand extends AbstractCommand
         $server->start($host, $port);
 
         $logger->info('App is stopped');
+
+        return 0;
     }
 }
