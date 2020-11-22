@@ -27,7 +27,7 @@ abstract class TestCase extends PHPUnitTestCase
     /**
      * @var \ReflectionClass[]
      */
-    protected array $traits;
+    protected array $traits = [];
 
     protected function setUp(): void
     {
@@ -35,6 +35,20 @@ abstract class TestCase extends PHPUnitTestCase
         $this->container = $this->app->getContainer();
 
         $this->setUpTraits();
+    }
+
+    /**
+     * Bootstrap your services inside coroutine context
+     */
+    protected function coroSetUp(): void
+    {
+    }
+
+    /**
+     * Teardown your services inside coroutine context
+     */
+    protected function coroTearDown(): void
+    {
     }
 
     abstract protected function createApplication(): ApplicationInterface;
@@ -61,12 +75,6 @@ abstract class TestCase extends PHPUnitTestCase
 
     protected function cleanupTraits(): void
     {
-        // transactions should be cleaned up first
-        if (isset($this->traits[DatabaseTransactions::class])) {
-            $this->cleanupDatabaseTransactions();
-            unset($this->traits[DatabaseTransactions::class]);
-        }
-
         foreach ($this->traits as $trait) {
             $traitName = $trait->getShortName();
 
@@ -94,16 +102,18 @@ abstract class TestCase extends PHPUnitTestCase
         /* @var \Throwable|null $ex */
         $ex = null;
 
-        \Co\run(function () use (&$result, &$ex) {
+        \Swoole\Coroutine\run(function () use (&$result, &$ex) {
             try {
                 $this->bootTraits();
+                $this->coroSetUp();
 
                 $result = parent::runTest();
+
+                $this->coroTearDown();
+                $this->cleanupTraits();
             } catch (\Throwable $e) {
                 $ex = $e;
             }
-
-            $this->cleanupTraits();
         });
 
         if (null !== $ex) {
