@@ -13,6 +13,7 @@ namespace MakiseCo\Testing;
 
 use DI\Container;
 use MakiseCo\ApplicationInterface;
+use MakiseCo\Bootstrapper;
 use MakiseCo\Util\TraitsCollector;
 use PHPUnit\Framework\TestCase as PHPUnitTestCase;
 
@@ -110,6 +111,7 @@ abstract class TestCase extends PHPUnitTestCase
 
         \Swoole\Coroutine\run(function () use (&$result, &$ex) {
             try {
+                $this->bootServices();
                 $this->bootTraits();
                 $this->coroSetUp();
 
@@ -120,8 +122,20 @@ abstract class TestCase extends PHPUnitTestCase
 
             try {
                 $this->coroTearDown();
-            } finally {
+            } catch (\Throwable $e) {
+                $ex = $e;
+            }
+
+            try {
                 $this->cleanupTraits();
+            } catch (\Throwable $e) {
+                $this->addWarning("Unable to cleanup traits: {$e->getMessage()}");
+            }
+
+            try {
+                $this->stopServices();
+            } catch (\Throwable $e) {
+                $this->addWarning("Unable to stop services: {$e->getMessage()}");
             }
         });
 
@@ -130,5 +144,24 @@ abstract class TestCase extends PHPUnitTestCase
         }
 
         return $result;
+    }
+
+    protected function getServices(): array
+    {
+        return [];
+    }
+
+    protected function bootServices(): void
+    {
+        /** @var Bootstrapper $bootstrapper */
+        $bootstrapper = $this->container->get(Bootstrapper::class);
+        $bootstrapper->init($this->getServices());
+    }
+
+    protected function stopServices(): void
+    {
+        /** @var Bootstrapper $bootstrapper */
+        $bootstrapper = $this->container->get(Bootstrapper::class);
+        $bootstrapper->stop($this->getServices());
     }
 }

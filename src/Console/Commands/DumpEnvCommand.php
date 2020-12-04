@@ -21,4 +21,12 @@ class DumpEnvCommand extends AbstractCommand
             $this->writeln("<comment>{$key}</comment>=<info>{$value}</info>");
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getServices(): array
+    {
+        return [null];
+    }
 }
