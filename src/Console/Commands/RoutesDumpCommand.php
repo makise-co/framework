@@ -55,6 +55,14 @@ class RoutesDumpCommand extends AbstractCommand
         $table->render();
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getServices(): array
+    {
+        return [null];
+    }
+
     protected function getRouteInfo(RouteInterface $route): array
     {
         return [

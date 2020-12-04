@@ -28,6 +28,14 @@ class MakiseCommand extends AbstractCommand
         $this->info($phrase);
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getServices(): array
+    {
+        return [null];
+    }
+
     protected const PHRASES = [
         'Every brilliant day should be lived for those who passed away.',
         'Everyone is watching someone other than themselves, someone important to them...',

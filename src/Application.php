@@ -102,6 +102,8 @@ class Application implements ApplicationInterface
         $this->container->set(ApplicationInterface::class, $this);
         // alias to ApplicationInterface
         $this->container->set(self::class, \DI\get(ApplicationInterface::class));
+        // add services bootstrapper
+        $this->container->set(Bootstrapper::class, new Bootstrapper());
     }
 
     protected function bootEnv(): void

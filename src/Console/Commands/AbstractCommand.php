@@ -68,4 +68,14 @@ abstract class AbstractCommand extends SymfonyCommand
 
         return $container->call($closure) ?? 0;
     }
+
+    /**
+     * Returns services list that should be initialized before command starts and stopped after command finished
+     *
+     * @return string[] empty list means that the all services should be initialized/stopped
+     */
+    public function getServices(): array
+    {
+        return [];
+    }
 }
