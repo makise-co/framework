@@ -49,7 +49,7 @@ class Bootstrapper
     }
 
     /**
-     * @param string[] $inits optional, services list/order that should be initialized
+     * @param string[]|null[] $inits optional, services list/order that should be initialized
      *
      * @throws Throwable
      */
@@ -69,6 +69,10 @@ class Bootstrapper
         }
 
         foreach ($inits as $service) {
+            if (null === $service) {
+                throw new InvalidArgumentException('Service name cannot be null');
+            }
+
             if (array_key_exists($service, $this->inits)) {
                 throw new InvalidArgumentException("Service {$service} does not exists in inits map");
             }
@@ -78,7 +82,7 @@ class Bootstrapper
     }
 
     /**
-     * @param string[] $stops optional, services list/order that should be stopped
+     * @param string[]|null[] $stops optional, services list/order that should be stopped
      *
      * @throws Throwable
      */
@@ -98,6 +102,10 @@ class Bootstrapper
         }
 
         foreach ($stops as $service) {
+            if (null === $service) {
+                throw new InvalidArgumentException('Service name cannot be null');
+            }
+
             if (array_key_exists($service, $this->stops)) {
                 throw new InvalidArgumentException("Service {$service} does not exists in stops map");
             }
