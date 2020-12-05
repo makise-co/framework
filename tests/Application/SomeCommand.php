@@ -23,6 +23,6 @@ class SomeCommand extends Command
 
     public function execute(InputInterface $input, OutputInterface $output): int
     {
-        return 0;
+        return 2;
     }
 }

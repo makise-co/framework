@@ -21,12 +21,12 @@ class Bootstrapper
     /**
      * @var Closure[]|array<string, Closure>
      */
-    private array $inits;
+    private array $inits = [];
 
     /**
      * @var Closure[]|array<string, Closure>
      */
-    private array $stops;
+    private array $stops = [];
 
     /**
      * @param string $service Service name (class-string or custom name)

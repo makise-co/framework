@@ -58,6 +58,8 @@ class ConsoleServiceProvider implements ServiceProviderInterface
                     $cmd = $event->getCommand();
                     if ($cmd instanceof AbstractCommand) {
                         $bootstrapper->stop($cmd->getServices());
+                    } elseif ($cmd instanceof Command) {
+                        $bootstrapper->stop([]);
                     }
                 }
             );
