@@ -19,6 +19,7 @@ use Symfony\Component\Console\Application as ConsoleApplication;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
+use Symfony\Component\Console\Event\ConsoleTerminateEvent;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
 class ConsoleServiceProvider implements ServiceProviderInterface
@@ -53,10 +54,12 @@ class ConsoleServiceProvider implements ServiceProviderInterface
             // stop command dependencies
             $eventDispatcher->addListener(
                 ConsoleEvents::TERMINATE,
-                static function (ConsoleCommandEvent $event) use ($bootstrapper) {
+                static function (ConsoleTerminateEvent $event) use ($bootstrapper) {
                     $cmd = $event->getCommand();
                     if ($cmd instanceof AbstractCommand) {
                         $bootstrapper->stop($cmd->getServices());
+                    } elseif ($cmd instanceof Command) {
+                        $bootstrapper->stop([]);
                     }
                 }
             );

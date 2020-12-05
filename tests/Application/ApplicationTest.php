@@ -11,6 +11,7 @@ declare(strict_types=1);
 namespace MakiseCo\Tests\Application;
 
 use MakiseCo\Application;
+use MakiseCo\Bootstrapper;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application as ConsoleApplication;
@@ -64,5 +65,40 @@ class ApplicationTest extends TestCase
             ->has('some');
 
         $this->assertTrue($hasCommand);
+    }
+
+    public function testCommandExecuted(): void
+    {
+        $app = new Application(__DIR__, __DIR__ . '/stubs/config');
+
+        $code = $app->run(['', 'some']);
+
+        self::assertSame(2, $code);
+    }
+
+    public function testCommandBootstrapper(): void
+    {
+        $app = new Application(__DIR__, __DIR__ . '/stubs/config');
+        /** @var Bootstrapper $bootstrapper */
+        $bootstrapper = $app->getContainer()->get(Bootstrapper::class);
+
+        $initTriggered = false;
+        $stopTriggered = false;
+
+        $bootstrapper->addService(
+            'test',
+            function () use (&$initTriggered) {
+                $initTriggered = true;
+            },
+            function () use (&$stopTriggered) {
+                $stopTriggered = true;
+            }
+        );
+
+        $code = $app->run(['', 'some']);
+
+        self::assertSame(2, $code);
+        self::assertTrue($initTriggered);
+        self::assertTrue($stopTriggered);
     }
 }

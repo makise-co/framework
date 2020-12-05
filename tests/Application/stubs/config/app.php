@@ -11,6 +11,7 @@ declare(strict_types=1);
 return [
     'name' => 'Makise-Co',
     'providers' => [
+        \MakiseCo\Console\ConsoleServiceProvider::class,
         \MakiseCo\Tests\Application\SomeProvider::class,
     ],
     'commands' => [
