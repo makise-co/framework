@@ -23,16 +23,14 @@
         "sort-packages": true
     },
     "suggest": {
-        "makise-co/postgres": "To work with modern PostgreSQL Coroutine driver",
         "makise-co/orm-bundle": "To work with modern ORM",
-        "makise-co/postgres-spiral-driver": "To work with modern DBAL"
+        "makise-co/http": "To run HTTP server",
+        "makise-co/auth": "To authenticate/authrize HTTP requests"
     },
     "require": {
         "php": "^7.4",
         "ext-json": "*",
         "ext-swoole": "^4.4",
-        "laminas/laminas-diactoros": "^2.4",
-        "makise-co/http-router": "^1.0",
         "monolog/monolog": "^2.0",
         "nunomaduro/collision": "^4.1",
         "php-di/php-di": "^6.1",
@@ -40,10 +38,9 @@
         "symfony/console": "^5.0",
         "symfony/event-dispatcher": "^5.0",
         "symfony/finder": "^5.0",
-        "symfony/http-foundation": "^5.0",
         "symfony/property-access": "^5.0",
         "symfony/var-dumper": "^5.0",
-        "vlucas/phpdotenv": "^4.1"
+        "vlucas/phpdotenv": "^5.0"
     },
     "require-dev": {
         "phpstan/phpstan": "^0.12.18",
@@ -53,7 +50,8 @@
     },
     "autoload": {
         "psr-4": {
-            "MakiseCo\\": "src/"
+            "MakiseCo\\": "src/",
+            "MakiseCo\\Tests\\": "tests/"
         },
         "files": [
             "src/Env/functions.php"

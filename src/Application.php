@@ -11,10 +11,6 @@ declare(strict_types=1);
 namespace MakiseCo;
 
 use DI\Container;
-use Dotenv\Repository\Adapter\EnvConstAdapter;
-use Dotenv\Repository\Adapter\PutenvAdapter;
-use Dotenv\Repository\Adapter\ServerConstAdapter;
-use Dotenv\Repository\RepositoryBuilder;
 use MakiseCo\Config\ConfigRepositoryInterface;
 use MakiseCo\Config\Repository;
 use MakiseCo\Env\Env;
@@ -108,32 +104,20 @@ class Application implements ApplicationInterface
 
     protected function bootEnv(): void
     {
-        $repository = RepositoryBuilder::create()
-            ->withReaders([new EnvConstAdapter, new PutenvAdapter, new ServerConstAdapter])
-            ->withWriters([new EnvConstAdapter, new PutenvAdapter, new ServerConstAdapter])
+        $repository = \Dotenv\Repository\RepositoryBuilder::createWithDefaultAdapters()
             ->make();
 
         Env::setRepository($repository);
 
-        $dotenv = \Dotenv\Dotenv::create(
-            $repository,
-            [$this->appDir . DIRECTORY_SEPARATOR],
-            ['.env'],
-            true
-        );
+        $envFile = '.env';
 
-        $dotenv->safeLoad();
-
-        // load env-scoped variables
-        $env = Env::get('APP_ENV', null);
-        if (null !== $env) {
-            \Dotenv\Dotenv::create(
-                $repository,
-                [$this->appDir . DIRECTORY_SEPARATOR],
-                [".env.{$env}"],
-                true
-            )->safeLoad();
+        if (($input = new ArgvInput)->hasParameterOption('--env')) {
+            $envFile .= ".{$input->getParameterOption('--env')}";
+        } elseif (!empty($env = $repository->get('APP_ENV'))) {
+            $envFile .= ".{$env}";
         }
+
+        \Dotenv\Dotenv::create($repository, [$this->appDir], [$envFile])->safeLoad();
     }
 
     protected function bootConfig(): void

@@ -27,17 +27,17 @@ class AbstractCommandTest extends TestCase
         $consoleApp->setAutoExit(false);
         $consoleApp->add($command);
 
-        $this->assertTrue($consoleApp->has('hello'));
+        self::assertTrue($consoleApp->has('hello'));
 
         $output = $this->createMock(ConsoleOutput::class);
         $output
-            ->expects($this->once())
+            ->expects(self::once())
             ->method('write')
             ->with('Hello, Okabe');
 
         $exitCode = $consoleApp->run(new ArrayInput(['command' => 'hello']), $output);
 
-        $this->assertSame(0, $exitCode);
+        self::assertSame(0, $exitCode);
     }
 
     private function makeCommand(): AbstractCommand
@@ -47,7 +47,7 @@ class AbstractCommandTest extends TestCase
             ->method('getContainer')
             ->willReturn(new Container());
 
-        return new class($appMock) extends AbstractCommand {
+        $cmd = new class() extends AbstractCommand {
             protected string $name = 'hello';
 
             public function handle(): void
@@ -55,5 +55,8 @@ class AbstractCommandTest extends TestCase
                 $this->write('Hello, Okabe');
             }
         };
+        $cmd->setMakise($appMock);
+
+        return $cmd;
     }
 }

@@ -21,7 +21,7 @@ class RepositoryTest extends TestCase
             'app' => ['name' => 'Makise']
         ]);
 
-        $this->assertEquals(
+        self::assertEquals(
             'Makise',
             $repo->get('app.name')
         );
@@ -33,7 +33,7 @@ class RepositoryTest extends TestCase
             'app' => ['name' => 'Makise']
         ]);
 
-        $this->assertEquals(
+        self::assertEquals(
             'Makise',
             $repo->get('app')['name']
         );
@@ -47,7 +47,7 @@ class RepositoryTest extends TestCase
 
         $items = $repo->toArray();
 
-        $this->assertEquals('Makise', $items['app']['name']);
+        self::assertEquals('Makise', $items['app']['name']);
     }
 
     public function testWriteArray(): void
@@ -58,7 +58,7 @@ class RepositoryTest extends TestCase
 
         $items = $repo->toArray();
 
-        $this->assertEquals('Makise', $items['app']['name']);
+        self::assertEquals('Makise', $items['app']['name']);
     }
 
     public function testUnset(): void
@@ -68,7 +68,7 @@ class RepositoryTest extends TestCase
         $repo->set('app.name', 'Makise');
         unset($repo['app.name']);
 
-        $this->assertNull($repo->get('app.name'));
+        self::assertNull($repo->get('app.name'));
     }
 
     public function testUnsetArray(): void
@@ -80,6 +80,6 @@ class RepositoryTest extends TestCase
         $repo->set('app.name', 'Makise');
         unset($repo['app']);
 
-        $this->assertNull($repo->get('app'));
+        self::assertNull($repo->get('app'));
     }
 }

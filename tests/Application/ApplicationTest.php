@@ -17,22 +17,77 @@ use PHPUnit\Framework\TestCase;
 use Symfony\Component\Console\Application as ConsoleApplication;
 
 use function MakiseCo\Env\env;
-use function putenv;
 
 class ApplicationTest extends TestCase
 {
     public function testEnvLoaded(): void
     {
-        putenv('APP_NAME=MakiseTest');
+        $_ENV['APP_NAME'] = 'MakiseTest';
         $app = new Application(__DIR__, __DIR__ . '/stubs/config');
 
         $env = env('APP_NAME');
 
-        $this->assertEquals('MakiseTest', $env);
+        self::assertEquals('MakiseTest', $env);
+    }
+
+    public function testEnvFileLoaded(): void
+    {
+        file_put_contents(__DIR__ . '/.env', "APP_NAME=Makise-Env");
+
+        $app = new Application(__DIR__, __DIR__ . '/stubs/config');
+
+        $env = env('APP_NAME');
+
+        try {
+            self::assertEquals('Makise-Env', $env);
+        } finally {
+            unlink(__DIR__ . '/.env');
+        }
+    }
+
+    public function testEnvFileOverloaded(): void
+    {
+        file_put_contents(__DIR__ . '/.env', "APP_NAME=Makise-Env");
+        file_put_contents(__DIR__ . '/.env.testing', "APP_NAME=Makise-EnvTesting");
+
+        $_ENV['APP_ENV'] = 'testing';
+
+        $app = new Application(__DIR__, __DIR__ . '/stubs/config');
+
+        $env = env('APP_NAME');
+
+        try {
+            self::assertEquals('Makise-EnvTesting', $env);
+        } finally {
+            unlink(__DIR__ . '/.env');
+            unlink(__DIR__ . '/.env.testing');
+        }
+    }
+
+    public function testEnvFileOverloadedByCliArg(): void
+    {
+        file_put_contents(__DIR__ . '/.env', "APP_NAME=Makise-Env");
+        file_put_contents(__DIR__ . '/.env.testing', "APP_NAME=Makise-EnvTestingCliArg");
+
+        global $argv;
+        $argv[] = '--env=testing';
+
+        $app = new Application(__DIR__, __DIR__ . '/stubs/config');
+
+        $env = env('APP_NAME');
+
+        try {
+            self::assertEquals('Makise-EnvTestingCliArg', $env);
+        } finally {
+            unlink(__DIR__ . '/.env');
+            unlink(__DIR__ . '/.env.testing');
+        }
     }
 
     public function testConfigLoaded(): void
     {
+        $_ENV['APP_NAME'] = $_SERVER['APP_NAME'] = 'Makise-Co';
+
         $app = new Application(__DIR__, __DIR__ . '/stubs/config');
 
         $val = $app
@@ -40,7 +95,7 @@ class ApplicationTest extends TestCase
             ->get(ConfigRepositoryInterface::class)
             ->get('app.name');
 
-        $this->assertEquals('Makise-Co', $val);
+        self::assertEquals('Makise-Co', $val);
     }
 
     public function testProvidersLoaded(): void
@@ -52,7 +107,7 @@ class ApplicationTest extends TestCase
             ->get(ConfigRepositoryInterface::class)
             ->get('some');
 
-        $this->assertEquals('it works', $val);
+        self::assertEquals('it works', $val);
     }
 
     public function testCommandsLoaded(): void
@@ -64,7 +119,7 @@ class ApplicationTest extends TestCase
             ->get(ConsoleApplication::class)
             ->has('some');
 
-        $this->assertTrue($hasCommand);
+        self::assertTrue($hasCommand);
     }
 
     public function testCommandExecuted(): void

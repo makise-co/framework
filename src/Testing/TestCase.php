@@ -15,57 +15,54 @@ use DI\Container;
 use MakiseCo\ApplicationInterface;
 use MakiseCo\Bootstrapper;
 use MakiseCo\Util\TraitsCollector;
-use PHPUnit\Framework\TestCase as PHPUnitTestCase;
+use ReflectionClass;
+use Throwable;
 
+use function gc_collect_cycles;
 use function method_exists;
 
-abstract class TestCase extends PHPUnitTestCase
+abstract class TestCase extends CoroutineTestCase
 {
     protected ApplicationInterface $app;
     protected Container $container;
 
     /**
-     * @var \ReflectionClass[]
+     * @var ReflectionClass[]
      */
     protected array $traits = [];
+
+    abstract protected function createApplication(): ApplicationInterface;
 
     protected function setUp(): void
     {
         $this->app = $this->createApplication();
         $this->container = $this->app->getContainer();
 
-        $this->setUpTraits();
+        // setup traits only once
+        if (empty($this->traits)) {
+            $this->setUpTraits();
+        }
+
+        $this->bootServices();
+        $this->bootTraits();
     }
 
     protected function tearDown(): void
     {
+        $this->cleanupTraits();
+        $this->stopServices();
+
         $this->app->terminate();
         unset($this->app, $this->container);
-        \gc_collect_cycles();
+        gc_collect_cycles();
     }
-
-    /**
-     * Bootstrap your services inside coroutine context
-     */
-    protected function coroSetUp(): void
-    {
-    }
-
-    /**
-     * Teardown your services inside coroutine context
-     */
-    protected function coroTearDown(): void
-    {
-    }
-
-    abstract protected function createApplication(): ApplicationInterface;
 
     /**
      * Boot the testing helper traits.
      */
     protected function setUpTraits(): void
     {
-        $this->traits = TraitsCollector::getTraits(new \ReflectionClass($this));
+        $this->traits = TraitsCollector::getTraits(new ReflectionClass($this));
     }
 
     protected function bootTraits(): void
@@ -89,66 +86,12 @@ abstract class TestCase extends PHPUnitTestCase
             if (method_exists($this, $cleanupMethod)) {
                 try {
                     $this->{$cleanupMethod}();
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $this->addWarning("Trait {$traitName} cleanup failed");
                     $this->addWarning($e->getMessage());
                 }
             }
         }
-    }
-
-    /**
-     * Run test cases in the coroutine
-     *
-     * @return mixed|null
-     * @throws \Throwable
-     */
-    protected function runTest()
-    {
-        $result = null;
-        /* @var \Throwable|null $ex */
-        $ex = null;
-
-        \Swoole\Coroutine\run(function () use (&$result, &$ex) {
-            try {
-                $this->bootServices();
-                $this->bootTraits();
-                $this->coroSetUp();
-
-                $result = parent::runTest();
-            } catch (\Throwable $e) {
-                $ex = $e;
-            }
-
-            try {
-                $this->coroTearDown();
-            } catch (\Throwable $e) {
-                $ex = $e;
-            }
-
-            try {
-                $this->cleanupTraits();
-            } catch (\Throwable $e) {
-                $this->addWarning("Unable to cleanup traits: {$e->getMessage()}");
-            }
-
-            try {
-                $this->stopServices();
-            } catch (\Throwable $e) {
-                $this->addWarning("Unable to stop services: {$e->getMessage()}");
-            }
-        });
-
-        if (null !== $ex) {
-            throw $ex;
-        }
-
-        return $result;
-    }
-
-    protected function getServices(): array
-    {
-        return [];
     }
 
     protected function bootServices(): void
@@ -163,5 +106,18 @@ abstract class TestCase extends PHPUnitTestCase
         /** @var Bootstrapper $bootstrapper */
         $bootstrapper = $this->container->get(Bootstrapper::class);
         $bootstrapper->stop($this->getServices());
+    }
+
+    /**
+     * Returns list of services that should be initialized before test case starts and stopped after test case finished
+     * @see \MakiseCo\Console\Commands\AbstractCommand::getServices()
+     *
+     * @return string[]|null[] empty list means that the all services should be initialized/stopped,
+     * [null] means that the no services will be initialized/stopped
+     */
+    protected function getServices(): array
+    {
+        // booting all services by default
+        return [];
     }
 }

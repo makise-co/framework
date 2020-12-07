@@ -11,12 +11,12 @@ declare(strict_types=1);
 namespace MakiseCo\Console;
 
 use DI\Container;
+use MakiseCo\ApplicationInterface;
 use MakiseCo\Bootstrapper;
 use MakiseCo\Config\ConfigRepositoryInterface as Config;
 use MakiseCo\Console\Commands\AbstractCommand;
 use MakiseCo\Providers\ServiceProviderInterface;
 use Symfony\Component\Console\Application as ConsoleApplication;
-use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\ConsoleEvents;
 use Symfony\Component\Console\Event\ConsoleCommandEvent;
 use Symfony\Component\Console\Event\ConsoleTerminateEvent;
@@ -45,8 +45,6 @@ class ConsoleServiceProvider implements ServiceProviderInterface
                     $cmd = $event->getCommand();
                     if ($cmd instanceof AbstractCommand) {
                         $bootstrapper->init($cmd->getServices());
-                    } elseif ($cmd instanceof Command) {
-                        $bootstrapper->init([]);
                     }
                 }
             );
@@ -58,17 +56,22 @@ class ConsoleServiceProvider implements ServiceProviderInterface
                     $cmd = $event->getCommand();
                     if ($cmd instanceof AbstractCommand) {
                         $bootstrapper->stop($cmd->getServices());
-                    } elseif ($cmd instanceof Command) {
-                        $bootstrapper->stop([]);
                     }
                 }
             );
 
-            $console = new ConsoleApplication($config->get('app.name'));
+            $console = new Application(
+                $container->get(ApplicationInterface::class),
+                $config->get('app.name', 'Makise-Co'),
+                $container->get(ApplicationInterface::class)->getVersion(),
+            );
             $console->setAutoExit(false);
             $console->setDispatcher($eventDispatcher);
 
             return $console;
         });
+
+        // alias
+        $container->set(Application::class, \DI\get(ConsoleApplication::class));
     }
 }
