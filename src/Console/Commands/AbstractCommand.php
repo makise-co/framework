@@ -21,19 +21,12 @@ abstract class AbstractCommand extends SymfonyCommand
 {
     use CommandTrait;
 
-    protected ApplicationInterface $app;
-
     protected string $name = '';
     protected string $description = '';
     protected array $arguments = [];
     protected array $options = [];
 
-    public function __construct(ApplicationInterface $app)
-    {
-        $this->app = $app;
-
-        parent::__construct(null);
-    }
+    protected ApplicationInterface $makise;
 
     protected function configure(): void
     {
@@ -58,12 +51,17 @@ abstract class AbstractCommand extends SymfonyCommand
         }
     }
 
+    public function setMakise(ApplicationInterface $makise): void
+    {
+        $this->makise = $makise;
+    }
+
     final public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->input = $input;
         $this->output = $output;
 
-        $container = $this->app->getContainer();
+        $container = $this->makise->getContainer();
         $closure = Closure::fromCallable([$this, 'handle']);
 
         return $container->call($closure) ?? 0;
