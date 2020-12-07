@@ -50,8 +50,7 @@
     },
     "autoload": {
         "psr-4": {
-            "MakiseCo\\": "src/",
-            "MakiseCo\\Tests\\": "tests/"
+            "MakiseCo\\": "src/"
         },
         "files": [
             "src/Env/functions.php"
