@@ -28,7 +28,7 @@
         "makise-co/postgres-spiral-driver": "To work with modern DBAL"
     },
     "require": {
-        "php": "^7.4",
+        "php": ">=7.4",
         "ext-json": "*",
         "ext-swoole": "^4.4",
         "laminas/laminas-diactoros": "^2.4",
