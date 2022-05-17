@@ -21,19 +21,12 @@ abstract class AbstractCommand extends SymfonyCommand
 {
     use CommandTrait;
 
-    protected ApplicationInterface $app;
-
     protected string $name = '';
     protected string $description = '';
     protected array $arguments = [];
     protected array $options = [];
 
-    public function __construct(ApplicationInterface $app)
-    {
-        $this->app = $app;
-
-        parent::__construct(null);
-    }
+    protected ApplicationInterface $makise;
 
     protected function configure(): void
     {
@@ -58,14 +51,30 @@ abstract class AbstractCommand extends SymfonyCommand
         }
     }
 
+    public function setMakise(ApplicationInterface $makise): void
+    {
+        $this->makise = $makise;
+    }
+
     final public function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->input = $input;
         $this->output = $output;
 
-        $container = $this->app->getContainer();
+        $container = $this->makise->getContainer();
         $closure = Closure::fromCallable([$this, 'handle']);
 
         return $container->call($closure) ?? 0;
+    }
+
+    /**
+     * Returns services list that should be initialized before command starts and stopped after command finished
+     *
+     * @return string[]|null[] empty list means that the all services should be initialized/stopped,
+     * [null] means that the no services will be initialized/stopped
+     */
+    public function getServices(): array
+    {
+        return [];
     }
 }

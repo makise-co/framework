@@ -10,19 +10,17 @@ declare(strict_types=1);
 
 namespace MakiseCo\Tests\Application;
 
-use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Output\OutputInterface;
+use MakiseCo\Console\Commands\AbstractCommand;
 
-class SomeCommand extends Command
+class SomeCommand extends AbstractCommand
 {
     public function configure(): void
     {
         $this->setName('some');
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function handle(): int
     {
-        return 0;
+        return 2;
     }
 }

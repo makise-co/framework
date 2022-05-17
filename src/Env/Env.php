@@ -33,7 +33,6 @@ class Env
      */
     public static function get(string $key, $default = null)
     {
-        /** @noinspection PhpParamsInspection */
         return Option::fromValue(static::$repository->get($key))
             ->map(function ($value) {
                 switch (strtolower($value)) {

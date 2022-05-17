@@ -32,4 +32,12 @@ class DumpConfigCommand extends AbstractCommand
             dump($config->get($path));
         }
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getServices(): array
+    {
+        return [null];
+    }
 }

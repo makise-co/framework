@@ -8,9 +8,10 @@
 
 declare(strict_types=1);
 
-namespace MakiseCo\Providers;
+namespace MakiseCo\Event;
 
 use DI\Container;
+use MakiseCo\Providers\ServiceProviderInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 
